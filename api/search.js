@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     url.searchParams.set("num", "5");
     url.searchParams.set("safe", "active");
 
-    const r = await fetch(url);
+    const r = await fetch(url, { headers: { "Accept": "application/json" } });
     const data = await r.json();
 
     const items = (data.items || []).map(it => ({
