@@ -2,6 +2,7 @@
   --border: #e5e7eb;
   --muted: #6b7280;
   --muted-2: #374151;
+  --tracking: 0.02em;
 }
 
 * { box-sizing: border-box; }
@@ -132,7 +133,8 @@ body::before {
   padding: 12px 18px 28px 12px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.7;
+  letter-spacing: var(--tracking);
 }
 
 /* ===== 오버레이 하이라이트 방식 ===== */
@@ -143,6 +145,7 @@ body::before {
   word-break: break-word;
   color: #111827;
   pointer-events: none;
+  letter-spacing: var(--tracking);
 }
 
 /* 실제 입력 textarea (문자 투명, 커서만 보임) */
@@ -160,6 +163,7 @@ body::before {
   font: inherit;
   line-height: inherit;
   overflow: hidden;             /* textarea 내부 스크롤 제거 */
+  letter-spacing: var(--tracking);
 }
 .typingInput::placeholder { color: transparent; } /* 중복 안내 방지 */
 
@@ -169,7 +173,8 @@ body::before {
   word-break: break-word;
   margin: 0;
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.7;
+  letter-spacing: var(--tracking);
 }
 
 /* 하단 3줄 여백 */
@@ -185,7 +190,7 @@ body::before {
 /* 유틸 */
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 button {

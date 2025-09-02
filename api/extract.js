@@ -19,15 +19,14 @@ export default async function handler(req, res) {
 
     const full = article.textContent.trim();
     const fullLength = full.length;
-    const limited = fullLength > 1500 ? full.slice(0, 1500) : full;
 
-    res.status(200).json({
-      title: article.title || "",
-      text: limited,          // UI 공급(최대 1500자)
-      textLength: fullLength, // 길이 필터(1000~1500)용
-      source: new URL(url).hostname,
-      url,
-    });
+  res.status(200).json({
+  title: article.title || "",
+  text: full,             // ✅ 전체 본문 전달
+  textLength: fullLength, // 참고용으로 길이는 남겨둬도 됨
+  source: new URL(url).hostname,
+  url,
+});
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
