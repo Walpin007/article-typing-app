@@ -158,7 +158,7 @@ body::before {
   outline: none;
   resize: none;
   background: transparent;
-  color: transparent;           /* 글자는 숨김 */
+  color: #111827;           /* 글자 검정 */
   caret-color: #111827;         /* 커서만 보임 */
   font: inherit;
   line-height: inherit;
