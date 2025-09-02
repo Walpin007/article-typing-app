@@ -321,6 +321,7 @@ export default function App() {
                     선택한 기사 원문을 그대로 타이핑하세요.
                   </span>
                 ) : (
+                  {/*
                   text.split("").map((ch, i) => {
                     const t = input[i];
                     if (t == null) {
@@ -331,6 +332,7 @@ export default function App() {
                     }
                     return <span key={i} style={{ color: "red" }}>{ch}</span>;
                   })
+                    */}
                 )}
               </div>
 
