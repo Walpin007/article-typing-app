@@ -1,7 +1,7 @@
 /* =============== RESET & BASE =============== */
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
-:root { --tracking: 0.02em; }
+:root { --tracking: 0.02em; --control-h: 40px; }
 
 /* =============== THEME TOKENS =============== */
 /* Light */
@@ -18,7 +18,7 @@ html, body, #root { height: 100%; margin: 0; }
   --text-muted:#475569;
   --text-muted-strong:#1f2937;
 
-  --input-bg: rgba(255,255,255,.85);
+  --input-bg: rgba(255,255,255,.95);
   --input-stroke: rgba(15,23,42,.12);
 
   --accent:#2563eb;
@@ -92,44 +92,52 @@ body{
 }
 .resultsBar{ margin-top:-4px; }
 
-/* =============== FORM CONTROLS =============== */
-/* 입력/셀렉트/버튼을 같은 높이로 맞춤 */
-input, select{
+/* =============== FORM CONTROLS (통일 높이) =============== */
+input, select {
   border:1px solid var(--input-stroke);
   background: var(--input-bg);
   color:var(--text);
   border-radius:8px;
-  padding:10px 12px;           /* 높이 기준 */
   font-weight: 500;
   font-size:14px;
   line-height:1.4;
   outline:none;
   transition:.15s ease;
-}
-input::placeholder{ opacity:.8; }
-input:focus, select:focus{
-  border-color: color-mix(in oklab, var(--accent) 70%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent);
+  height: var(--control-h);
+  padding: 0 12px;             /* 높이 고정 시 세로 패딩 0 */
+  appearance: none;
+  -webkit-appearance: none;
 }
 select{ min-width:280px; }
 
-/* 버튼: 플랫 & 동일 높이 */
+/* 버튼: 플랫 + 동일 높이(셀렉트와 정확히 같게) */
 button{
   border:1px solid var(--input-stroke);
   background: var(--accent);
   color:white;
   border-radius:8px;
-  padding:10px 12px;          /* ✅ select와 동일 높이 */
   font-weight:600;
   font-size:14px;
-  line-height:1.4;
+  line-height:1;               /* 높이 계산에 간섭 없도록 */
   cursor:pointer;
   transition: background-color .2s ease, transform .05s ease;
-  box-shadow:none;            /* ✅ 그림자 제거 */
+  box-shadow:none;
+  height: var(--control-h);
+  padding: 0 12px;             /* ✅ 드롭박스와 동일 */
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 button:hover{ background: color-mix(in oklab, var(--accent) 90%, white); }
 button:active{ transform: translateY(1px); }
 button[disabled]{ opacity:.6; cursor:not-allowed; }
+
+/* 툴바/결과바 안의 컨트롤에 강제 적용(우선순위↑) */
+.toolbar input, .toolbar select, .toolbar button,
+.resultsBar select, .resultsBar button {
+  height: var(--control-h);
+  padding: 0 12px;
+}
 
 /* 테마 토글 */
 .themeToggle{ display:inline-flex; align-items:center; gap:8px; margin-left:auto; }
@@ -163,12 +171,18 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   font-weight:700; color:var(--text-strong); display:flex; align-items:center; gap:8px;
 }
 
-/* 내부 스크롤 컨테이너 */
-.scroll{ flex:1; min-height:0; overflow:hidden; position:relative; }
+/* 내부 스크롤 컨테이너: flex로 바꿔서 자식이 꽉 차게 */
+.scroll{
+  flex:1; min-height:0; overflow:hidden; position:relative;
+  display:flex; flex-direction:column; /* ✅ 핵심 */
+}
 
-/* 좌측 기사 영역 */
+/* 좌측 기사: 자식이 남은 공간을 모두 차지 */
 .articleView{
-  height:100%; overflow:auto; scrollbar-gutter: stable both-edges;
+  flex:1;                       /* ✅ 핵심 */
+  min-height:0;
+  overflow:auto;
+  scrollbar-gutter: stable both-edges;
   padding:14px 18px 30px 14px;
 }
 .articleText{
@@ -177,9 +191,10 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   color: var(--text);
 }
 
-/* 우측 필사 영역 (오버레이 제거 버전) */
+/* 우측 필사(오버레이 제거) */
 .typingBox{
-  flex:1;                        /* ✅ 카드 내부에서 남는 높이 채우기 */
+  flex:1;                       /* ✅ 카드 내부에서 남은 높이 채우기 */
+  min-height:0;
   display:flex; flex-direction:column;
   overflow:hidden;
   padding:14px 18px 30px 14px;
@@ -187,7 +202,8 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   font-size:16px; line-height:1.7; letter-spacing: var(--tracking);
 }
 .typingInput{
-  flex:1;                        /* ✅ textarea 자체가 높이를 채움 */
+  flex:1;                       /* ✅ textarea 자체가 세로로 최대 확장 */
+  min-height:0;
   width:100%;
   resize:none; border:none; outline:none;
   background: var(--input-bg);
