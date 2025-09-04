@@ -114,16 +114,30 @@ input:focus, select:focus{
 select{min-width:280px}
 
 button{
-  border:1px solid var(--input-stroke);
-  background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 75%, white),
-                                      color-mix(in oklab, var(--accent) 85%, black));
-  color:white;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer;
-  box-shadow: 0 6px 16px color-mix(in oklab, var(--accent) 35%, black);
-  transition: transform .05s ease, filter .2s ease;
+  border: 1px solid var(--input-stroke);
+  background: var(--accent);
+  color: white;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color .2s ease, transform .05s ease;
+  box-shadow: none; /* ✅ 그림자 제거 */
 }
-button:hover{filter:brightness(1.05)}
-button:active{transform: translateY(1px)}
-button[disabled]{opacity:.6;cursor:not-allowed}
+
+button:hover{
+  background: color-mix(in oklab, var(--accent) 90%, white);
+}
+
+button:active{
+  transform: translateY(1px);
+}
+
+button[disabled]{
+  opacity: .6;
+  cursor: not-allowed;
+}
 
 /* 토글 스위치(테마) */
 .themeToggle{
