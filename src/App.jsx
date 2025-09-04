@@ -4,6 +4,24 @@ import "./index.css";
 const MAX_ROUNDS = 3;
 
 export default function App() {
+  // ===== Theme =====
+  const getInitTheme = () => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "light" || saved === "dark") return saved;
+    // 시스템 선호
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark" : "light";
+  };
+  const [theme, setTheme] = useState(getInitTheme);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(t => (t === "dark" ? "light" : "dark"));
+
+  // ===== 기존 상태들 =====
   const [round, setRound] = useState(1);
   const [typed, setTyped] = useState(["", "", ""]);
   const [paused, setPaused] = useState(false);
@@ -20,7 +38,8 @@ export default function App() {
     source: "",
     content: "",
     plain: "",
-    pubDate: ""
+    pubDate: "",
+    textLength: 0
   });
   const [viewMode, setViewMode] = useState("clean");
   const [editMode, setEditMode] = useState(false);
@@ -57,7 +76,7 @@ export default function App() {
       const r = await fetch(`/api/search-mixed?q=${encodeURIComponent(query.trim())}`);
       const data = await r.json();
       const items = Array.isArray(data.items) ? data.items : [];
-      const opts = items.map((it, i) => ({
+      const opts = items.slice(0, 10).map((it, i) => ({
         idx: i,
         sourceType: it.sourceType,
         title: it.title,
@@ -90,7 +109,8 @@ export default function App() {
         source: `${opt.sourceType === "google" ? "Google" : "Naver"}/${(ed?.source || opt.displayLink || "").replace(/^www\./, "")}`,
         content: ed?.text || "",
         plain: ed?.plain || "",
-        pubDate: opt.pubDate || ""
+        pubDate: opt.pubDate || "",
+        textLength: typeof ed?.textLength === "number" ? ed.textLength : (ed?.text?.length || 0)
       });
       setViewMode(ed?.mode === "plain" ? "plain" : "clean");
       setEditMode(false);
@@ -156,6 +176,19 @@ export default function App() {
         <button onClick={doSearch} disabled={loading}>
           {loading ? "검색 중…" : "검색"}
         </button>
+
+        {/* 테마 토글 */}
+        <div className="themeToggle" title="테마 전환">
+          <span style={{opacity:.85}}>{theme === "dark" ? "다크" : "라이트"}</span>
+          <div
+            className={`switch ${theme === "dark" ? "on" : ""}`}
+            role="switch"
+            aria-checked={theme === "dark"}
+            onClick={toggleTheme}
+          >
+            <div className="knob" />
+          </div>
+        </div>
       </div>
 
       {options.length > 0 && (
@@ -170,6 +203,7 @@ export default function App() {
             {options.map((o) => (
               <option key={o.idx} value={o.idx}>
                 [{o.sourceType === "google" ? "Google" : "Naver"}] {o.title}
+                {article.title === o.title && article.textLength ? ` · ${article.textLength.toLocaleString()}자` : ""}
               </option>
             ))}
           </select>
@@ -220,7 +254,7 @@ export default function App() {
       )}
       {hasSearched && !loading && options.length === 0 && (
         <div className="loadingRow" style={{ paddingTop: 0 }}>
-          <span style={{ color: "#6b7280", fontStyle: "italic" }}>
+          <span style={{ opacity:.85 }}>
             뉴스 결과가 없습니다. 검색어를 바꾸거나 더 구체적으로 입력해 보세요.
           </span>
         </div>
@@ -234,7 +268,7 @@ export default function App() {
         <div className="pane">
           <header ref={headerLeftRef}>
             {article.title || "기사 원문"}{" "}
-            <span style={{ color: "#6b7280", fontWeight: 400 }}>
+            <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
               · 출처: {article.source || "-"}
               {article.pubDate && <> · 날짜: {new Date(article.pubDate).toLocaleDateString("ko-KR", { year:"numeric", month:"2-digit", day:"2-digit" })}</>}
             </span>
@@ -253,7 +287,7 @@ export default function App() {
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   placeholder="여기서 직접 원문을 고칠 수 있어요."
-                  style={{ position: "static", color: "#111827", caretColor: "#111827", overflow: "auto" }}
+                  style={{ position: "static", color: "var(--text)", caretColor: "var(--text)", overflow: "auto" }}
                 />
               ) : (
                 <div className="articleText">
@@ -269,13 +303,12 @@ export default function App() {
           <div className="info">하단 3줄 여백 유지 · 좌우 스크롤 동기화(필요 시 적용)</div>
         </div>
 
-        {/* 오른쪽: 필사 입력 — 오버레이 제거 */}
+        {/* 오른쪽: 필사 입력 */}
         <div className="pane">
           <header ref={headerRightRef}>필사 입력</header>
 
           <div className="scroll">
             <div className="typingBox">
-              {/* 오버레이 삭제됨 */}
               {text.length === 0 && (
                 <div className="placeholderInline">(검색 후 드롭다운에서 기사를 선택하세요)</div>
               )}
@@ -298,8 +331,8 @@ export default function App() {
               <button onClick={() => setPaused(true)}>이 회차 완료 (멈춤)</button>
             )}
             {paused && round < MAX_ROUNDS && (
-              <span className="actions">
-                <span>복기 후</span>
+              <span className="actions" style={{ marginLeft: 8 }}>
+                <span>복기 후</span>{" "}
                 <button onClick={() => { setPaused(false); setRound(r => r + 1); }}>
                   다음 회차
                 </button>
