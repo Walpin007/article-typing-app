@@ -184,11 +184,29 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   overflow:auto;
   scrollbar-gutter: stable both-edges;
   padding:14px 18px 30px 14px;
+  display: flex;
+  flex-direction: column;
 }
 .articleText{
   white-space: pre-line; word-break: break-word; margin:0;
   font-size:16px; line-height:1.7; letter-spacing: var(--tracking);
   color: var(--text);
+}
+/* 원문 편집 Textarea가 세로 공간을 전부 쓰도록 */
+.editorInput{
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  resize: none;
+  border: 1px solid var(--input-stroke);
+  border-radius: 12px;
+  background: var(--input-bg);
+  color: var(--text);
+  caret-color: var(--text);
+  font: inherit;
+  line-height: inherit;
+  padding: 12px;
+  overflow:auto;
 }
 
 /* 우측 필사(오버레이 제거) */

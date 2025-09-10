@@ -282,7 +282,7 @@ export default function App() {
 
               {editMode ? (
                 <textarea
-                  className="typingInput mono"
+                  className="editorInput mono"
                   spellCheck="false"
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
