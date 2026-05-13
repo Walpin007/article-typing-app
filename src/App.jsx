@@ -372,6 +372,7 @@ export default function App() {
 
           <select
             id="articleSelect"
+            className="articleSelect"
             value={selectedIdx}
             onChange={(event) => loadSelectedArticle(event.target.value)}
           >
@@ -391,6 +392,7 @@ export default function App() {
           </select>
 
           <select
+            className="viewModeSelect"
             value={viewMode}
             onChange={(event) => {
               setViewMode(event.target.value);
@@ -403,28 +405,24 @@ export default function App() {
             <option value="plain">원문텍스트(라이트)</option>
           </select>
 
-          <button
-            onClick={() => {
-              if (!editMode) {
+          {!editMode ? (
+            <button
+              onClick={() => {
                 const base =
                   (viewMode === "clean" ? article.content : article.plain) ||
                   "";
 
                 setDraft(base);
                 setEditMode(true);
-              } else {
-                setEditMode(false);
-                setDraft("");
-              }
-            }}
-            disabled={!article.content && !article.plain}
-          >
-            {editMode ? "편집 취소" : "편집 모드"}
-          </button>
-
-          {editMode && (
+              }}
+              disabled={!article.content && !article.plain}
+            >
+              편집 모드
+            </button>
+          ) : (
             <>
               <button
+                className="btnApply"
                 onClick={() => {
                   if (viewMode === "clean") {
                     setArticle((prev) => ({
@@ -447,6 +445,7 @@ export default function App() {
               </button>
 
               <button
+                className="btnCancel"
                 onClick={() => {
                   setEditMode(false);
                   setDraft("");
@@ -458,7 +457,7 @@ export default function App() {
           )}
         </div>
       )}
-
+      
       {/* 로딩 / 결과 없음 */}
       {loading && (
         <div className="loadingRow">
