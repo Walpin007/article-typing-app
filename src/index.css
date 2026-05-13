@@ -263,3 +263,41 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   background: var(--card-bg); backdrop-filter: var(--frost); box-shadow: var(--shadow);
   margin-top:auto;
 }
+
+/* =============== RESULTS BAR LAYOUT FIX =============== */
+
+/* 기사 선택 드롭다운: 더 넓게 */
+.resultsBar .articleSelect {
+  flex: 1 1 520px;
+  min-width: 420px;
+  max-width: none;
+}
+
+/* 정리본/원문텍스트 선택 드롭다운: 텍스트 길이에 맞게 축소 */
+.resultsBar .viewModeSelect {
+  flex: 0 0 auto;
+  width: 190px;
+  min-width: 190px;
+}
+
+/* 적용 버튼: 초록색 */
+.resultsBar .btnApply {
+  background: var(--accent-2);
+  color: white;
+  border-color: color-mix(in oklab, var(--accent-2) 70%, black);
+}
+
+.resultsBar .btnApply:hover {
+  background: color-mix(in oklab, var(--accent-2) 88%, white);
+}
+
+/* 취소 버튼: 빨간색 */
+.resultsBar .btnCancel {
+  background: #ef4444;
+  color: white;
+  border-color: color-mix(in oklab, #ef4444 70%, black);
+}
+
+.resultsBar .btnCancel:hover {
+  background: color-mix(in oklab, #ef4444 88%, white);
+}
