@@ -506,12 +506,6 @@ export default function App() {
 
           <div className="scroll">
             <div ref={leftRef} className="articleView mono">
-              {!article.content && !article.plain && (
-                <div className="articleText">
-                  (검색 후 드롭다운에서 기사를 선택하세요)
-                </div>
-              )}
-
               {editMode ? (
                 <textarea
                   className="editorInput mono"
@@ -545,12 +539,6 @@ export default function App() {
 
           <div className="scroll">
             <div className="typingBox">
-              {text.length === 0 && (
-                <div className="placeholderInline">
-                  (검색 후 드롭다운에서 기사를 선택하세요)
-                </div>
-              )}
-
               <textarea
                 ref={typingRef}
                 className={`typingInput ${hasError ? "error" : ""}`}
