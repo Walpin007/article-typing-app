@@ -7,20 +7,32 @@ function cleanText(s = "") {
   return s
     .replace(/\u00A0/g, " ")
     .replace(/\r/g, "")
-
-    // 줄 내부의 탭/여러 공백만 정리
     .replace(/[ \t]{2,}/g, " ")
-
-    // 줄 앞뒤 공백 정리
     .split("\n")
     .map((line) => line.trim())
-    .join("\n")
-
-    // 엔터가 3개 이상이면 2개까지만 유지
-    // 즉, 문단 구분은 살리고 과한 빈 줄은 줄임
+    .filter((line) => line.length > 0)
+    .join("\n\n")
     .replace(/\n{3,}/g, "\n\n")
-
     .trim();
+}
+
+function extractParagraphText(articleContent = "") {
+  const dom = new JSDOM(articleContent);
+  const doc = dom.window.document;
+
+  const blocks = doc.querySelectorAll(
+    "p, h1, h2, h3, h4, blockquote, li"
+  );
+
+  const paragraphs = Array.from(blocks)
+    .map((el) => el.textContent.trim())
+    .filter(Boolean);
+
+  if (paragraphs.length > 0) {
+    return paragraphs.join("\n\n");
+  }
+
+  return doc.body.textContent || "";
 }
 
 export default async function handler(req, res) {
@@ -28,7 +40,10 @@ export default async function handler(req, res) {
     const { url } = req.query;
     if (!url) return res.status(400).json({ error: "Missing ?url=" });
 
-    const resp = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+    const resp = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
+
     if (!resp.ok) {
       return res.status(400).json({ error: `Fetch failed: ${resp.status}` });
     }
@@ -43,7 +58,8 @@ export default async function handler(req, res) {
       return res.status(422).json({ error: "Could not extract article text" });
     }
 
-    const full = cleanText(article.textContent);
+    const rawText = extractParagraphText(article.content || article.textContent);
+    const full = cleanText(rawText);
     const fullLength = full.length;
 
     res.status(200).json({
