@@ -567,7 +567,6 @@ export default function App() {
                 }
               />
 
-              <div className="footer-gap-3" />
             </div>
           </div>
 
