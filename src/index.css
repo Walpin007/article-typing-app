@@ -235,8 +235,14 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
 .placeholderInline{ color:var(--text-muted); font-style: italic; margin-bottom:8px; }
 .footer-gap-3{ height:3.2em; }
 .info{
-  color:var(--text-muted); font-size:12px; padding:8px 12px 12px;
-  border-top:1px solid color-mix(in oklab, var(--card-stroke) 70%, transparent);
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 0 12px;
+  height: 34px;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  border-top: 1px solid color-mix(in oklab, var(--card-stroke) 70%, transparent);
 }
 
 /* 로딩 */
