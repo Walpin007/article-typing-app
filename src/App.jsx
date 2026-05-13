@@ -3,15 +3,49 @@ import "./index.css";
 
 const MAX_ROUNDS = 3;
 
+/**
+ * 비교용 정규화 함수
+ * 화면에 보이는 원문은 그대로 유지하고,
+ * 정확도/오타/완료 판단할 때만 문자 모양 차이를 흡수합니다.
+ */
+const normalizeForCompare = (value = "") => {
+  return value
+    // 쌍따옴표류 통일
+    .replace(/[“”„‟]/g, '"')
+
+    // 홑따옴표류 통일
+    .replace(/[‘’‚‛]/g, "'")
+
+    // 백틱/악센트/프라임 기호도 홑따옴표로 통일
+    .replace(/[`´′]/g, "'")
+
+    // 긴 대시류 통일
+    .replace(/[–—―]/g, "-")
+
+    // 말줄임표 통일
+    .replace(/…/g, "...")
+
+    // 특수 공백을 일반 공백으로 통일
+    .replace(/\u00A0/g, " ");
+};
+
 export default function App() {
-  // ===== Theme =====
+  /**
+   * Theme
+   */
   const getInitTheme = () => {
     const saved = localStorage.getItem("theme");
-    if (saved === "light" || saved === "dark") return saved;
-    // 시스템 선호
-    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark" : "light";
+
+    if (saved === "light" || saved === "dark") {
+      return saved;
+    }
+
+    return window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   };
+
   const [theme, setTheme] = useState(getInitTheme);
 
   useEffect(() => {
@@ -19,13 +53,20 @@ export default function App() {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  const toggleTheme = () => setTheme(t => (t === "dark" ? "light" : "dark"));
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
 
-  // ===== 기존 상태들 =====
+  /**
+   * Typing state
+   */
   const [round, setRound] = useState(1);
   const [typed, setTyped] = useState(["", "", ""]);
   const [paused, setPaused] = useState(false);
 
+  /**
+   * Search state
+   */
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState([]);
   const [selectedIdx, setSelectedIdx] = useState("");
@@ -33,153 +74,284 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [loadingArticle, setLoadingArticle] = useState(false);
 
+  /**
+   * Article state
+   */
   const [article, setArticle] = useState({
     title: "",
     source: "",
     content: "",
     plain: "",
     pubDate: "",
-    textLength: 0
+    textLength: 0,
   });
+
   const [viewMode, setViewMode] = useState("clean");
   const [editMode, setEditMode] = useState(false);
   const [draft, setDraft] = useState("");
 
-  const headerLeftRef  = useRef(null);
+  /**
+   * Refs
+   */
+  const headerLeftRef = useRef(null);
   const headerRightRef = useRef(null);
   const leftRef = useRef(null);
   const typingRef = useRef(null);
 
-  const text = (editMode ? draft : (viewMode === "clean" ? article.content : article.plain)) || "";
+  /**
+   * Current text / input
+   */
+  const text =
+    (editMode
+      ? draft
+      : viewMode === "clean"
+        ? article.content
+        : article.plain) || "";
+
   const input = typed[round - 1] || "";
 
+  /**
+   * 비교용 정규화 텍스트
+   */
+  const normalizedInput = useMemo(() => {
+    return normalizeForCompare(input);
+  }, [input]);
+
+  const normalizedText = useMemo(() => {
+    return normalizeForCompare(text);
+  }, [text]);
+
+  /**
+   * Accuracy
+   */
   const accuracy = useMemo(() => {
-    if (!input.length) return 100;
+    if (!normalizedInput.length) return 100;
+
     let ok = 0;
-    for (let i = 0; i < input.length; i++) if (input[i] === text[i]) ok++;
-    return Number(((ok / input.length) * 100).toFixed(1));
-  }, [input, text]);
 
+    for (let i = 0; i < normalizedInput.length; i++) {
+      if (normalizedInput[i] === normalizedText[i]) {
+        ok++;
+      }
+    }
+
+    return Number(((ok / normalizedInput.length) * 100).toFixed(1));
+  }, [normalizedInput, normalizedText]);
+
+  /**
+   * 오타 여부
+   * textarea는 글자별 색상 지정이 어려우므로,
+   * 오타가 하나라도 있으면 입력창 전체 색상을 빨간색으로 바꿉니다.
+   */
   const hasError = useMemo(() => {
-    for (let i = 0; i < input.length; i++) if (input[i] !== text[i]) return true;
-    return false;
-  }, [input, text]);
+    for (let i = 0; i < normalizedInput.length; i++) {
+      if (normalizedInput[i] !== normalizedText[i]) {
+        return true;
+      }
+    }
 
+    return false;
+  }, [normalizedInput, normalizedText]);
+
+  /**
+   * 완료 여부
+   * 따옴표/대시/말줄임표 등은 정규화 기준으로 완료 처리합니다.
+   */
+  const isFinished = useMemo(() => {
+    const a = normalizedInput.trim();
+    const b = normalizedText.trim();
+
+    return Boolean(a && b && a === b);
+  }, [normalizedInput, normalizedText]);
+
+  /**
+   * Search
+   */
   const doSearch = async () => {
     if (!query.trim() || loading) return;
+
     setLoading(true);
     setHasSearched(false);
     setOptions([]);
     setSelectedIdx("");
 
     try {
-      const r = await fetch(`/api/search-mixed?q=${encodeURIComponent(query.trim())}`);
-      const data = await r.json();
+      const response = await fetch(
+        `/api/search-mixed?q=${encodeURIComponent(query.trim())}`
+      );
+
+      const data = await response.json();
       const items = Array.isArray(data.items) ? data.items : [];
-      const opts = items.slice(0, 10).map((it, i) => ({
-        idx: i,
-        sourceType: it.sourceType,
-        title: it.title,
-        snippet: it.snippet,
-        link: it.link,
-        displayLink: it.displayLink,
-        pubDate: it.pubDate
+
+      const opts = items.slice(0, 10).map((item, index) => ({
+        idx: index,
+        sourceType: item.sourceType,
+        title: item.title,
+        snippet: item.snippet,
+        link: item.link,
+        displayLink: item.displayLink,
+        pubDate: item.pubDate,
       }));
+
       setOptions(opts);
+    } catch (error) {
+      console.error("검색 오류:", error);
+      setOptions([]);
     } finally {
       setHasSearched(true);
       setLoading(false);
     }
   };
 
+  /**
+   * Load selected article
+   */
   const loadSelectedArticle = async (idxStr) => {
     setSelectedIdx(idxStr);
+
     const idx = Number(idxStr);
     if (Number.isNaN(idx)) return;
-    const opt = options[idx];
-    if (!opt) return;
+
+    const selected = options[idx];
+    if (!selected) return;
 
     setLoadingArticle(true);
+
     try {
-      const er = await fetch(`/api/extract?url=${encodeURIComponent(opt.link)}`);
-      const ed = await er.json();
+      const response = await fetch(
+        `/api/extract?url=${encodeURIComponent(selected.link)}`
+      );
+
+      const data = await response.json();
+
+      const textLength =
+        typeof data?.textLength === "number"
+          ? data.textLength
+          : data?.text?.length || 0;
 
       setArticle({
-        title: opt.title,
-        source: `${opt.sourceType === "google" ? "Google" : "Naver"}/${(ed?.source || opt.displayLink || "").replace(/^www\./, "")}`,
-        content: ed?.text || "",
-        plain: ed?.plain || "",
-        pubDate: opt.pubDate || "",
-        textLength: typeof ed?.textLength === "number" ? ed.textLength : (ed?.text?.length || 0)
+        title: selected.title || data?.title || "",
+        source: `${
+          selected.sourceType === "google" ? "Google" : "Naver"
+        }/${(data?.source || selected.displayLink || "").replace(/^www\./, "")}`,
+        content: data?.text || "",
+        plain: data?.plain || "",
+        pubDate: selected.pubDate || data?.pubDate || "",
+        textLength,
       });
-      setViewMode(ed?.mode === "plain" ? "plain" : "clean");
+
+      setViewMode(data?.mode === "plain" ? "plain" : "clean");
       setEditMode(false);
       setDraft("");
       setRound(1);
       setTyped(["", "", ""]);
       setPaused(false);
 
-      leftRef.current && (leftRef.current.scrollTop = 0);
+      if (leftRef.current) {
+        leftRef.current.scrollTop = 0;
+      }
+
       requestAnimationFrame(syncHeaderHeights);
+    } catch (error) {
+      console.error("기사 본문 추출 오류:", error);
     } finally {
       setLoadingArticle(false);
     }
   };
 
-  const onChangeTyping = (e) => {
-    const value = e.target.value;
-    setTyped((prev) => { const a = [...prev]; a[round - 1] = value; return a; });
+  /**
+   * Typing change
+   */
+  const onChangeTyping = (event) => {
+    const value = event.target.value;
+
+    setTyped((prev) => {
+      const next = [...prev];
+      next[round - 1] = value;
+      return next;
+    });
   };
 
-  const isFinished = input.trim() && text.trim() && input.trim() === text.trim();
-
+  /**
+   * Header height sync
+   */
   const syncHeaderHeights = () => {
-    const L = headerLeftRef.current;
-    const R = headerRightRef.current;
-    if (!L || !R) return;
-    L.style.minHeight = "";
-    R.style.minHeight = "";
-    const lh = L.getBoundingClientRect().height;
-    const rh = R.getBoundingClientRect().height;
-    const max = Math.max(lh, rh);
-    L.style.minHeight = `${max}px`;
-    R.style.minHeight = `${max}px`;
+    const leftHeader = headerLeftRef.current;
+    const rightHeader = headerRightRef.current;
+
+    if (!leftHeader || !rightHeader) return;
+
+    leftHeader.style.minHeight = "";
+    rightHeader.style.minHeight = "";
+
+    const leftHeight = leftHeader.getBoundingClientRect().height;
+    const rightHeight = rightHeader.getBoundingClientRect().height;
+    const maxHeight = Math.max(leftHeight, rightHeight);
+
+    leftHeader.style.minHeight = `${maxHeight}px`;
+    rightHeader.style.minHeight = `${maxHeight}px`;
   };
 
   useEffect(() => {
     requestAnimationFrame(syncHeaderHeights);
-  }, [article.title, article.source, article.pubDate, viewMode, editMode, selectedIdx]);
+  }, [
+    article.title,
+    article.source,
+    article.pubDate,
+    viewMode,
+    editMode,
+    selectedIdx,
+  ]);
 
   useEffect(() => {
-    const onResize = () => requestAnimationFrame(syncHeaderHeights);
+    const onResize = () => {
+      requestAnimationFrame(syncHeaderHeights);
+    };
+
     window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+    };
   }, []);
 
   return (
     <div className="container">
+      {/* 상단 상태 바 */}
       <div className="status">
         <div className="left">필사 {round}회차</div>
-        <div className="center">글자 수: {input.length} / {text.length}</div>
+        <div className="center">
+          글자 수: {input.length} / {text.length}
+        </div>
         <div className="right">정확도: {accuracy}%</div>
       </div>
 
+      {/* 검색 영역 */}
       <div className="toolbar">
         <input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && !loading) { e.preventDefault(); doSearch(); } }}
+          onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !loading) {
+              event.preventDefault();
+              doSearch();
+            }
+          }}
           disabled={loading}
           placeholder="키워드를 입력하세요 (예: 반도체, 금리, 전기차)"
           style={{ flex: 1, minWidth: 220 }}
         />
+
         <button onClick={doSearch} disabled={loading}>
           {loading ? "검색 중…" : "검색"}
         </button>
 
         {/* 테마 토글 */}
         <div className="themeToggle" title="테마 전환">
-          <span style={{opacity:.85}}>{theme === "dark" ? "다크" : "라이트"}</span>
+          <span style={{ opacity: 0.85 }}>
+            {theme === "dark" ? "다크" : "라이트"}
+          </span>
+
           <div
             className={`switch ${theme === "dark" ? "on" : ""}`}
             role="switch"
@@ -191,26 +363,40 @@ export default function App() {
         </div>
       </div>
 
+      {/* 기사 선택 영역 */}
       {options.length > 0 && (
         <div className="resultsBar">
-          <label htmlFor="articleSelect">기사 선택(최대 {Math.min(10, options.length)}개):</label>
+          <label htmlFor="articleSelect">
+            기사 선택(최대 {Math.min(10, options.length)}개):
+          </label>
+
           <select
             id="articleSelect"
             value={selectedIdx}
-            onChange={(e) => loadSelectedArticle(e.target.value)}
+            onChange={(event) => loadSelectedArticle(event.target.value)}
           >
-            <option value="" disabled>— 선택하세요 —</option>
-            {options.map((o) => (
-              <option key={o.idx} value={o.idx}>
-                [{o.sourceType === "google" ? "Google" : "Naver"}] {o.title}
-                {article.title === o.title && article.textLength ? ` · ${article.textLength.toLocaleString()}자` : ""}
+            <option value="" disabled>
+              — 선택하세요 —
+            </option>
+
+            {options.map((option) => (
+              <option key={option.idx} value={option.idx}>
+                [{option.sourceType === "google" ? "Google" : "Naver"}]{" "}
+                {option.title}
+                {article.title === option.title && article.textLength
+                  ? ` · ${article.textLength.toLocaleString()}자`
+                  : ""}
               </option>
             ))}
           </select>
 
           <select
             value={viewMode}
-            onChange={(e) => { setViewMode(e.target.value); setEditMode(false); setDraft(""); }}
+            onChange={(event) => {
+              setViewMode(event.target.value);
+              setEditMode(false);
+              setDraft("");
+            }}
             disabled={!article.content && !article.plain}
           >
             <option value="clean">정리본(클린)</option>
@@ -220,7 +406,10 @@ export default function App() {
           <button
             onClick={() => {
               if (!editMode) {
-                const base = (viewMode === "clean" ? article.content : article.plain) || "";
+                const base =
+                  (viewMode === "clean" ? article.content : article.plain) ||
+                  "";
+
                 setDraft(base);
                 setEditMode(true);
               } else {
@@ -232,52 +421,95 @@ export default function App() {
           >
             {editMode ? "편집 취소" : "편집 모드"}
           </button>
+
           {editMode && (
             <>
               <button
                 onClick={() => {
-                  if (viewMode === "clean") setArticle((a) => ({ ...a, content: draft }));
-                  else setArticle((a) => ({ ...a, plain: draft }));
+                  if (viewMode === "clean") {
+                    setArticle((prev) => ({
+                      ...prev,
+                      content: draft,
+                      textLength: draft.length,
+                    }));
+                  } else {
+                    setArticle((prev) => ({
+                      ...prev,
+                      plain: draft,
+                      textLength: draft.length,
+                    }));
+                  }
+
                   setEditMode(false);
                 }}
               >
                 적용
               </button>
-              <button onClick={() => { setEditMode(false); setDraft(""); }}>취소</button>
+
+              <button
+                onClick={() => {
+                  setEditMode(false);
+                  setDraft("");
+                }}
+              >
+                취소
+              </button>
             </>
           )}
         </div>
       )}
 
+      {/* 로딩 / 결과 없음 */}
       {loading && (
-        <div className="loadingRow"><span className="spinner" />구글·네이버에서 기사 가져오는 중…</div>
+        <div className="loadingRow">
+          <span className="spinner" />
+          구글·네이버에서 기사 가져오는 중…
+        </div>
       )}
+
       {hasSearched && !loading && options.length === 0 && (
         <div className="loadingRow" style={{ paddingTop: 0 }}>
-          <span style={{ opacity:.85 }}>
+          <span style={{ opacity: 0.85 }}>
             뉴스 결과가 없습니다. 검색어를 바꾸거나 더 구체적으로 입력해 보세요.
           </span>
         </div>
       )}
+
       {loadingArticle && (
-        <div className="loadingRow"><span className="spinner" />선택한 기사 본문을 정리 중…</div>
+        <div className="loadingRow">
+          <span className="spinner" />
+          선택한 기사 본문을 정리 중…
+        </div>
       )}
 
+      {/* 본문 영역 */}
       <div className="grid">
-        {/* 왼쪽: 기사 */}
+        {/* 왼쪽: 기사 원문 */}
         <div className="pane">
           <header ref={headerLeftRef}>
             {article.title || "기사 원문"}{" "}
             <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
               · 출처: {article.source || "-"}
-              {article.pubDate && <> · 날짜: {new Date(article.pubDate).toLocaleDateString("ko-KR", { year:"numeric", month:"2-digit", day:"2-digit" })}</>}
+              {article.pubDate && (
+                <>
+                  {" "}
+                  · 날짜:{" "}
+                  {new Date(article.pubDate).toLocaleDateString("ko-KR", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                  })}
+                </>
+              )}
             </span>
           </header>
 
           <div className="scroll">
             <div ref={leftRef} className="articleView mono">
-              {(!article.content && !article.plain) && (
-                <div className="articleText">(검색 후 드롭다운에서 기사를 선택하세요)</div>
+              {!article.content && !article.plain && (
+                <div className="articleText">
+                  (검색 후 드롭다운에서 기사를 선택하세요)
+                </div>
               )}
 
               {editMode ? (
@@ -285,22 +517,26 @@ export default function App() {
                   className="editorInput mono"
                   spellCheck="false"
                   value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
+                  onChange={(event) => setDraft(event.target.value)}
                   placeholder="여기서 직접 원문을 고칠 수 있어요."
-                  style={{ position: "static", color: "var(--text)", caretColor: "var(--text)", overflow: "auto" }}
                 />
               ) : (
                 <div className="articleText">
-                  {(article.content || article.plain)
-                    ? (viewMode === "clean" ? article.content : article.plain)
+                  {article.content || article.plain
+                    ? viewMode === "clean"
+                      ? article.content
+                      : article.plain
                     : ""}
                 </div>
               )}
+
               <div className="footer-gap-3" />
             </div>
           </div>
 
-          <div className="info">하단 3줄 여백 유지 · 좌우 스크롤 동기화(필요 시 적용)</div>
+          <div className="info">
+            기사 출처와 날짜를 확인한 뒤 필사를 시작하세요.
+          </div>
         </div>
 
         {/* 오른쪽: 필사 입력 */}
@@ -310,7 +546,9 @@ export default function App() {
           <div className="scroll">
             <div className="typingBox">
               {text.length === 0 && (
-                <div className="placeholderInline">(검색 후 드롭다운에서 기사를 선택하세요)</div>
+                <div className="placeholderInline">
+                  (검색 후 드롭다운에서 기사를 선택하세요)
+                </div>
               )}
 
               <textarea
@@ -319,33 +557,51 @@ export default function App() {
                 spellCheck="false"
                 value={input}
                 onChange={onChangeTyping}
-                disabled={paused || round > MAX_ROUNDS || !(article.content || article.plain)}
-                placeholder={text.length ? "" : "선택한 기사 원문을 그대로 타이핑하세요."}
+                disabled={
+                  paused ||
+                  round > MAX_ROUNDS ||
+                  !(article.content || article.plain)
+                }
+                placeholder={
+                  text.length ? "" : "선택한 기사 원문을 그대로 타이핑하세요."
+                }
               />
+
               <div className="footer-gap-3" />
             </div>
           </div>
 
           <div className="info">
             {!paused && isFinished && (
-              <button onClick={() => setPaused(true)}>이 회차 완료 (멈춤)</button>
+              <button onClick={() => setPaused(true)}>
+                이 회차 완료
+              </button>
             )}
+
             {paused && round < MAX_ROUNDS && (
               <span className="actions" style={{ marginLeft: 8 }}>
-                <span>복기 후</span>{" "}
-                <button onClick={() => { setPaused(false); setRound(r => r + 1); }}>
+                <span>복기 후 </span>
+                <button
+                  onClick={() => {
+                    setPaused(false);
+                    setRound((prev) => prev + 1);
+                  }}
+                >
                   다음 회차
                 </button>
               </span>
             )}
+
             {paused && round === MAX_ROUNDS && (
-              <span>3회차 완료! (워드 저장은 다음 단계에서)</span>
+              <span>3회차 완료! 워드 저장 기능은 다음 단계에서 연결하면 됩니다.</span>
             )}
           </div>
         </div>
       </div>
 
-      <footer className="footer">© 2025 Park Hyung-jo. All rights reserved.</footer>
+      <footer className="footer">
+        © 2025 Park Hyung-jo. All rights reserved.
+      </footer>
     </div>
   );
 }
