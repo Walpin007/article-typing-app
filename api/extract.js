@@ -7,12 +7,19 @@ function cleanText(s = "") {
   return s
     .replace(/\u00A0/g, " ")
     .replace(/\r/g, "")
+
+    // 줄 내부의 탭/여러 공백만 정리
     .replace(/[ \t]{2,}/g, " ")
+
+    // 줄 앞뒤 공백 정리
     .split("\n")
     .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .join("\n\n")
+    .join("\n")
+
+    // 엔터가 3개 이상이면 2개까지만 유지
+    // 즉, 문단 구분은 살리고 과한 빈 줄은 줄임
     .replace(/\n{3,}/g, "\n\n")
+
     .trim();
 }
 
@@ -20,12 +27,34 @@ function extractParagraphText(articleContent = "") {
   const dom = new JSDOM(articleContent);
   const doc = dom.window.document;
 
-  // 불필요 요소 제거
+  // 불필요 요소 및 캡션성 요소 제거
   doc.querySelectorAll(
-    "script, style, noscript, iframe, figure, figcaption, .caption, .image-caption, .end_photo_org, .media_end_head_autosummary"
+    [
+      "script",
+      "style",
+      "noscript",
+      "iframe",
+      "figure",
+      "figcaption",
+
+      // 네이버 뉴스 이미지/캡션 영역
+      ".end_photo_org",
+      ".img_desc",
+      ".media_end_photo_caption",
+      ".media_end_photo_caption_text",
+      ".media_end_photo_caption_bold",
+      ".media_end_photo_org",
+      ".caption",
+      ".image-caption",
+
+      // 요약/부가 영역
+      ".media_end_head_autosummary",
+      ".media_end_head_journalist",
+      ".media_end_head_info",
+    ].join(",")
   ).forEach((el) => el.remove());
 
-  // br은 줄바꿈으로 변환
+  // br 태그는 줄바꿈으로 변환
   doc.querySelectorAll("br").forEach((br) => {
     br.replaceWith("\n");
   });
@@ -35,7 +64,23 @@ function extractParagraphText(articleContent = "") {
     el.append("\n\n");
   });
 
-  return doc.body.textContent || "";
+  const text = doc.body.textContent || "";
+
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => {
+      // 일반적인 사진 캡션/출처성 문장 제거
+      if (/사진\s*[:=]/.test(line)) return false;
+      if (/^\[.*사진.*\]/.test(line)) return false;
+      if (/연합뉴스|AP|AFP|EPA|로이터|뉴스1/.test(line) && line.length < 120) {
+        return false;
+      }
+
+      return true;
+    })
+    .join("\n\n");
 }
 
 export default async function handler(req, res) {
@@ -61,7 +106,7 @@ export default async function handler(req, res) {
       return res.status(422).json({ error: "Could not extract article text" });
     }
 
-    // ✅ 네이버 뉴스 본문 영역을 우선 사용
+    // 네이버 뉴스 본문 영역을 우선 사용
     const naverArticle = dom.window.document.querySelector("#dic_area");
 
     const rawText = naverArticle
