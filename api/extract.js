@@ -20,16 +20,47 @@ function extractParagraphText(articleContent = "") {
   const dom = new JSDOM(articleContent);
   const doc = dom.window.document;
 
-  const blocks = doc.querySelectorAll(
-    "p, h1, h2, h3, h4, blockquote, li"
-  );
+  // 캡션/불필요 요소 제거
+  doc.querySelectorAll(
+    "script, style, noscript, iframe, figure, figcaption, .caption, .image-caption"
+  ).forEach((el) => el.remove());
 
-  const paragraphs = Array.from(blocks)
+  const blockSelector = [
+    "p",
+    "div",
+    "section",
+    "article",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "blockquote",
+    "li"
+  ].join(",");
+
+  const blocks = Array.from(doc.querySelectorAll(blockSelector));
+
+  const paragraphs = blocks
+    // 자식 안에 또 본문 블록이 있으면 부모는 제외해서 중복 방지
+    .filter((el) => {
+      return !Array.from(el.children).some((child) =>
+        child.matches(blockSelector)
+      );
+    })
     .map((el) => el.textContent.trim())
     .filter(Boolean);
 
-  if (paragraphs.length > 0) {
-    return paragraphs.join("\n\n");
+  // 연속 중복 제거
+  const deduped = [];
+
+  for (const paragraph of paragraphs) {
+    if (deduped[deduped.length - 1] !== paragraph) {
+      deduped.push(paragraph);
+    }
+  }
+
+  if (deduped.length > 0) {
+    return deduped.join("\n\n");
   }
 
   return doc.body.textContent || "";
