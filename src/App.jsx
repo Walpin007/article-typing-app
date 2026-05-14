@@ -29,6 +29,15 @@ const normalizeForCompare = (value = "") => {
     .replace(/\u00A0/g, " ");
 };
 
+const isValidUrl = (value = "") => {
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
 export default function App() {
   /**
    * Theme
@@ -168,7 +177,8 @@ export default function App() {
    * Search
    */
   const doSearch = async () => {
-    if (!query.trim() || loading) return;
+    const keyword = query.trim();
+    if (!keyword || loading) return;
 
     setLoading(true);
     setHasSearched(false);
@@ -176,8 +186,66 @@ export default function App() {
     setSelectedIdx("");
 
     try {
+      // ✅ 검색창에 URL을 넣은 경우: 검색 결과를 거치지 않고 바로 기사 추출
+      if (isValidUrl(keyword)) {
+        const response = await fetch(
+          `/api/extract?url=${encodeURIComponent(keyword)}`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data?.error || "기사 본문 추출 실패");
+        }
+
+        const textLength =
+          typeof data?.textLength === "number"
+            ? data.textLength
+            : data?.text?.length || 0;
+
+        const directOption = {
+          idx: 0,
+          sourceType: "direct",
+          title: data?.title || "직접 입력한 기사",
+          snippet: "",
+          link: keyword,
+          displayLink: data?.source || new URL(keyword).hostname,
+          pubDate: data?.pubDate || "",
+        };
+
+        setOptions([directOption]);
+        setSelectedIdx("0");
+
+        setArticle({
+          title: directOption.title,
+          source: `Direct/${(data?.source || directOption.displayLink || "").replace(
+            /^www\./,
+            ""
+          )}`,
+          content: data?.text || "",
+          plain: data?.plain || "",
+          pubDate: data?.pubDate || "",
+          textLength,
+        });
+
+        setViewMode(data?.mode === "plain" ? "plain" : "clean");
+        setEditMode(false);
+        setDraft("");
+        setRound(1);
+        setTyped(["", "", ""]);
+        setPaused(false);
+
+        if (leftRef.current) {
+          leftRef.current.scrollTop = 0;
+        }
+
+        requestAnimationFrame(syncHeaderHeights);
+        return;
+      }
+
+      // ✅ 기존 키워드 검색
       const response = await fetch(
-        `/api/search-mixed?q=${encodeURIComponent(query.trim())}`
+        `/api/search-mixed?q=${encodeURIComponent(keyword)}`
       );
 
       const data = await response.json();
@@ -195,7 +263,7 @@ export default function App() {
 
       setOptions(opts);
     } catch (error) {
-      console.error("검색 오류:", error);
+      console.error("검색/기사 추출 오류:", error);
       setOptions([]);
     } finally {
       setHasSearched(true);
@@ -338,7 +406,7 @@ export default function App() {
             }
           }}
           disabled={loading}
-          placeholder="키워드를 입력하세요 (예: 반도체, 금리, 전기차)"
+          placeholder="키워드 또는 기사 링크를 입력하세요"
           style={{ flex: 1, minWidth: 220 }}
         />
 
@@ -382,7 +450,11 @@ export default function App() {
 
             {options.map((option) => (
               <option key={option.idx} value={option.idx}>
-                [{option.sourceType === "google" ? "Google" : "Naver"}]{" "}
+                [{option.sourceType === "google"
+                  ? "Google"
+                  : option.sourceType === "naver"
+                    ? "Naver"
+                    : "Direct"}]{" "}
                 {option.title}
                 {article.title === option.title && article.textLength
                   ? ` · ${article.textLength.toLocaleString()}자`
