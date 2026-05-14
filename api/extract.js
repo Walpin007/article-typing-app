@@ -79,7 +79,7 @@ function extractParagraphText(articleContent = "") {
       // 일반적인 사진 캡션/출처성 문장 제거
       if (/사진\s*[:=]/.test(line)) return false;
       if (/^\[.*사진.*\]/.test(line)) return false;
-      if (/연합뉴스|AP|AFP|EPA|로이터|뉴스1/.test(line) && line.length < 120) {
+      if (/연합뉴스|AP|AFP|EPA|로이터|뉴스1|뉴시스|게티이미지|게티이미지코리아|Getty Images/i.test(line) && line.length < 160) {
         return false;
       }
 
