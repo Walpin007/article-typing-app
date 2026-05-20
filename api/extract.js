@@ -70,23 +70,33 @@ function extractParagraphText(articleContent = "") {
     el.append("\n\n");
   });
 
-  const text = doc.body.textContent || "";
+const text = doc.body.textContent || "";
 
-  return text
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .filter((line) => {
-      // 일반적인 사진 캡션/출처성 문장 제거
-      if (/사진\s*[:=]/.test(line)) return false;
-      if (/^\[.*사진.*\]/.test(line)) return false;
-      if (/연합뉴스|AP|AFP|EPA|로이터|뉴스1|뉴시스|게티이미지|게티이미지코리아|Getty Images/i.test(line) && line.length < 160) {
-        return false;
-      }
+return text
+  .split("\n")
+  .map((line) => line.trim())
+  .filter(Boolean)
+  .filter((line) => {
+    // 일반적인 사진 캡션/출처성 문장 제거
+    if (/사진\s*[:=]/.test(line)) return false;
+    if (/^\[.*사진.*\]/.test(line)) return false;
 
-      return true;
-    })
-    .join("\n\n");
+    // 캡션 패턴 제거
+    if (/[.!?。！？”’)]\s*\/\s*\S+/.test(line) && line.length < 220) {
+      return false;
+    }
+
+    // 출처성 짧은 문장 제거
+    if (
+      /연합뉴스|AP|AFP|EPA|로이터|뉴스1|뉴시스|게티이미지|게티이미지코리아|Getty Images/i.test(line) &&
+      line.length < 160
+    ) {
+      return false;
+    }
+
+    return true;
+  })
+  .join("\n\n");
 }
 
 export default async function handler(req, res) {
