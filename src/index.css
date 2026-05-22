@@ -76,21 +76,87 @@ body{
 
 /* =============== TOP BARS =============== */
 .status{
-  display:grid; grid-template-columns:1fr auto 1fr; align-items:center;
-  padding:12px 14px; border-radius:14px; border:1px solid var(--card-stroke);
-  background: var(--card-bg); backdrop-filter: var(--frost); box-shadow: var(--shadow);
+  display:grid;
+  grid-template-columns: 160px minmax(260px, 1fr) 220px;
+  align-items:center;
+  gap: 12px;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--card-stroke);
+  background: var(--card-bg);
+  backdrop-filter: var(--frost);
+  box-shadow: var(--shadow);
 }
-.status .left{justify-self:start}
-.status .center{justify-self:center}
-.status .right{justify-self:end; text-align:right}
-.status>div{font-weight:600; color:var(--text-muted-strong); font-variant-numeric:tabular-nums}
 
-.toolbar, .resultsBar{
-  display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-  padding:10px 12px; border-radius:14px; border:1px solid var(--card-stroke);
-  background: var(--card-bg); backdrop-filter: var(--frost); box-shadow: var(--shadow);
+.status .left{
+  justify-self:start;
 }
-.resultsBar{ margin-top:-4px; }
+
+.status .center{
+  justify-self:stretch;
+}
+
+.status .right{
+  justify-self:end;
+  text-align:right;
+}
+
+.status>div{
+  font-weight:600;
+  color:var(--text-muted-strong);
+  font-variant-numeric:tabular-nums;
+}
+
+.appTitle{
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-strong);
+}
+
+.topSearch{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+
+.topSearch input{
+  flex:1;
+  min-width:0;
+}
+
+.topSearch button{
+  flex:0 0 auto;
+}
+
+.topRight{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:12px;
+  white-space:nowrap;
+}
+
+.topRight .themeToggle{
+  margin-left:0;
+}
+
+.resultsBar{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--card-stroke);
+  background: var(--card-bg);
+  backdrop-filter: var(--frost);
+  box-shadow: var(--shadow);
+}
+
+.resultsBar{
+  margin-top:-4px;
+}
 
 /* =============== FORM CONTROLS (통일 높이) =============== */
 input, select {
@@ -133,8 +199,10 @@ button:active{ transform: translateY(1px); }
 button[disabled]{ opacity:.6; cursor:not-allowed; }
 
 /* 툴바/결과바 안의 컨트롤에 강제 적용(우선순위↑) */
-.toolbar input, .toolbar select, .toolbar button,
-.resultsBar select, .resultsBar button {
+.resultsBar select,
+.resultsBar button,
+.topSearch input,
+.topSearch button {
   height: var(--control-h);
   padding: 0 12px;
 }
@@ -318,4 +386,22 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+@media (max-width: 760px) {
+  .status {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .status .left,
+  .status .center,
+  .status .right {
+    justify-self: stretch;
+    text-align: left;
+  }
+
+  .topRight {
+    justify-content: space-between;
+  }
 }
