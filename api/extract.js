@@ -81,6 +81,10 @@ return text
     if (/사진\s*[:=]/.test(line)) return false;
     if (/^\[.*사진.*\]/.test(line)) return false;
 
+    // 그래픽/일러스트/표 캡션 제거
+    // 예: "/그래픽=김현국", "/그래픽 = 김현국"
+    if (/^\/\s*(그래픽|일러스트|표|자료)\s*[=:]/.test(line)) return false;
+
     // 캡션 패턴 제거
     if (/[.!?。！？”’)]\s*\/\s*\S+/.test(line) && line.length < 220) {
       return false;
