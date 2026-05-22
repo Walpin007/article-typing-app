@@ -385,48 +385,45 @@ export default function App() {
 
   return (
     <div className="container">
-      {/* 상단 상태 바 */}
+            {/* 상단 상태/검색 바 */}
       <div className="status">
-        <div className="left">필사 {round}회차</div>
-        <div className="center">
-          글자 수: {input.length} / {text.length}
+        <div className="left appTitle">기사 필사</div>
+
+        <div className="center topSearch">
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !loading) {
+                event.preventDefault();
+                doSearch();
+              }
+            }}
+            disabled={loading}
+            placeholder="키워드 또는 기사 링크를 입력하세요"
+          />
+
+          <button onClick={doSearch} disabled={loading}>
+            {loading ? "검색 중…" : "검색"}
+          </button>
         </div>
-        <div className="right">정확도: {accuracy}%</div>
-      </div>
 
-      {/* 검색 영역 */}
-      <div className="toolbar">
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !loading) {
-              event.preventDefault();
-              doSearch();
-            }
-          }}
-          disabled={loading}
-          placeholder="키워드 또는 기사 링크를 입력하세요"
-          style={{ flex: 1, minWidth: 220 }}
-        />
+        <div className="right topRight">
+          <span>정확도: {accuracy}%</span>
 
-        <button onClick={doSearch} disabled={loading}>
-          {loading ? "검색 중…" : "검색"}
-        </button>
+          <div className="themeToggle" title="테마 전환">
+            <span style={{ opacity: 0.85 }}>
+              {theme === "dark" ? "다크" : "라이트"}
+            </span>
 
-        {/* 테마 토글 */}
-        <div className="themeToggle" title="테마 전환">
-          <span style={{ opacity: 0.85 }}>
-            {theme === "dark" ? "다크" : "라이트"}
-          </span>
-
-          <div
-            className={`switch ${theme === "dark" ? "on" : ""}`}
-            role="switch"
-            aria-checked={theme === "dark"}
-            onClick={toggleTheme}
-          >
-            <div className="knob" />
+            <div
+              className={`switch ${theme === "dark" ? "on" : ""}`}
+              role="switch"
+              aria-checked={theme === "dark"}
+              onClick={toggleTheme}
+            >
+              <div className="knob" />
+            </div>
           </div>
         </div>
       </div>
