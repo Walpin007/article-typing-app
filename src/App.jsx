@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./index.css";
 
+import {
+  Document,
+  Packer,
+  Paragraph,
+  HeadingLevel,
+} from "docx";
+
+import { saveAs } from "file-saver";
+
 const MAX_ROUNDS = 3;
 
 /**
@@ -350,6 +359,100 @@ export default function App() {
     setPaused(true);
   };
   
+  const downloadWordFile = async () => {
+  const doc = new Document({
+    sections: [
+      {
+        children: [
+          new Paragraph({
+            text: article.title || "기사 필사",
+            heading: HeadingLevel.HEADING_1,
+          }),
+
+          new Paragraph({
+            text: `출처: ${article.source || "-"}`,
+          }),
+
+          new Paragraph({
+            text: article.pubDate
+              ? `날짜: ${article.pubDate}`
+              : "",
+          }),
+
+          new Paragraph({
+            text: "",
+          }),
+
+          new Paragraph({
+            text: "[원문]",
+            heading: HeadingLevel.HEADING_2,
+          }),
+
+          new Paragraph({
+            text,
+          }),
+
+          new Paragraph({
+            text: "",
+          }),
+
+          new Paragraph({
+            text: "[1회차 필사]",
+            heading: HeadingLevel.HEADING_2,
+          }),
+
+          new Paragraph({
+            text: typed[0] || "",
+          }),
+
+          new Paragraph({
+            text: "",
+          }),
+
+          new Paragraph({
+            text: "[2회차 필사]",
+            heading: HeadingLevel.HEADING_2,
+          }),
+
+          new Paragraph({
+            text: typed[1] || "",
+          }),
+
+          new Paragraph({
+            text: "",
+          }),
+
+          new Paragraph({
+            text: "[3회차 필사]",
+            heading: HeadingLevel.HEADING_2,
+          }),
+
+          new Paragraph({
+            text: typed[2] || "",
+          }),
+        ],
+      },
+    ],
+  });
+
+  const blob = await Packer.toBlob(doc);
+
+  const now = new Date();
+
+  const yy = String(now.getFullYear()).slice(2);
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+
+  const safeTitle = (article.title || "기사필사")
+    .replace(/[\\/:*?"<>|]/g, "")
+    .trim()
+    .slice(0, 40);
+
+  const fileName = `${yy}${mm}${dd}필사_${safeTitle}.docx`;
+
+  saveAs(blob, fileName);
+};
+  
   /**
    * Header height sync
    */
@@ -662,8 +765,18 @@ export default function App() {
             )}
 
             {paused && round === MAX_ROUNDS && (
-              <span>3회차 완료! 워드 저장 기능은 다음 단계에서 연결하면 됩니다.</span>
+              <span className="actions">
+                <span>3회차 완료!</span>
+
+                <button
+                  className="btnApply"
+                  onClick={downloadWordFile}
+                >
+                  워드 저장
+                </button>
+              </span>
             )}
+            
           </div>
         </div>
       </div>
