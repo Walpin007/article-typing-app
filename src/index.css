@@ -297,7 +297,6 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   font: inherit; line-height: inherit; overflow: auto; padding: 12px;
   border: 1px solid var(--input-stroke); border-radius: 12px;
 }
-.typingInput.error{ color:#ef4444; caret-color:#ef4444; } /* 오타 시 전체 빨강 */
 
 /* 보조 UI */
 .placeholderInline{ color:var(--text-muted); font-style: italic; margin-bottom:8px; }
