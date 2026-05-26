@@ -340,6 +340,16 @@ export default function App() {
     });
   };
 
+  const completeRoundAndCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(input);
+    } catch (error) {
+      console.error("복사 실패:", error);
+    }
+
+    setPaused(true);
+  };
+  
   /**
    * Header height sync
    */
@@ -628,14 +638,18 @@ export default function App() {
 
           <div className="info">
             {!paused && isFinished && (
-              <button onClick={() => setPaused(true)}>
-                이 회차 완료
+              <button
+                className="btnApply"
+                onClick={completeRoundAndCopy}
+              >
+                이 회차 완료 및 내용 복사
               </button>
             )}
 
             {paused && round < MAX_ROUNDS && (
               <span className="actions" style={{ marginLeft: 8 }}>
-                <span>복기 후 </span>
+                <span>필사 내용이 복사되었습니다. 복기 후 </span>
+
                 <button
                   onClick={() => {
                     setPaused(false);
