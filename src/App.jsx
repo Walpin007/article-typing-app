@@ -163,6 +163,58 @@ export default function App() {
   }, [normalizedInput, normalizedText]);
 
   /**
+   * 오타 하이라이트
+   */
+  const highlightedText = useMemo(() => {
+  const chars = [];
+
+  for (let i = 0; i < input.length; i++) {
+    const originalChar = input[i];
+    const normalizedTyped = normalizedInput[i];
+    const normalizedSource = normalizedText[i];
+
+    const isWrong = normalizedTyped !== normalizedSource;
+
+    chars.push(
+      `<span class="${isWrong ? "charError" : "charOk"}">${
+        originalChar
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\n/g, "<br/>")
+          .replace(/ /g, "&nbsp;")
+      }</span>`
+    );
+  }
+
+  return chars.join("");
+}, [input, normalizedInput, normalizedText]);const highlightedText = useMemo(() => {
+  const chars = [];
+
+  for (let i = 0; i < input.length; i++) {
+    const originalChar = input[i];
+    const normalizedTyped = normalizedInput[i];
+    const normalizedSource = normalizedText[i];
+
+    const isWrong = normalizedTyped !== normalizedSource;
+
+    chars.push(
+      `<span class="${isWrong ? "charError" : "charOk"}">${
+        originalChar
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\n/g, "<br/>")
+          .replace(/ /g, "&nbsp;")
+      }</span>`
+    );
+  }
+
+  return chars.join("");
+}, [input, normalizedInput, normalizedText]);
+
+  
+  /**
    * 완료 여부
    * 따옴표/대시/말줄임표 등은 정규화 기준으로 완료 처리합니다.
    */
@@ -617,22 +669,39 @@ export default function App() {
 
           <div className="scroll">
             <div className="typingBox">
-              <textarea
-                ref={typingRef}
-                className={`typingInput ${hasError ? "error" : ""}`}
-                spellCheck="false"
-                value={input}
-                onChange={onChangeTyping}
-                disabled={
-                  paused ||
-                  round > MAX_ROUNDS ||
-                  !(article.content || article.plain)
-                }
-                placeholder={
-                  text.length ? "" : "선택한 기사 원문을 그대로 타이핑하세요."
-                }
-              />
+              <div className="typingLayerWrap">
+                <div
+                  className="typingHighlight"
+                  dangerouslySetInnerHTML={{
+                    __html: highlightedText || "&nbsp;",
+                  }}
+                />
 
+                <textarea
+                  ref={typingRef}
+                  className="typingInput overlayMode"
+                  spellCheck="false"
+                  value={input}
+                  onChange={onChangeTyping}
+                  onScroll={(event) => {
+                    const overlay = event.currentTarget
+                      .previousElementSibling;
+
+                    if (overlay) {
+                      overlay.scrollTop = event.currentTarget.scrollTop;
+                      overlay.scrollLeft = event.currentTarget.scrollLeft;
+                    }
+                  }}
+                  disabled={
+                    paused ||
+                    round > MAX_ROUNDS ||
+                    !(article.content || article.plain)
+                  }
+                  placeholder={
+                    text.length ? "" : "선택한 기사 원문을 그대로 타이핑하세요."
+                  }
+                />
+              </div>
             </div>
           </div>
 
