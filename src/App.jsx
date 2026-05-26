@@ -360,98 +360,122 @@ export default function App() {
   };
   
   const downloadWordFile = async () => {
-  const doc = new Document({
-    sections: [
-      {
-        children: [
-          new Paragraph({
-            text: article.title || "기사 필사",
-            heading: HeadingLevel.HEADING_1,
-          }),
+    const doc = new Document({
+      sections: [
+        {
+          children: [
+            new Paragraph({
+              text: article.title || "기사 필사",
+              heading: HeadingLevel.HEADING_1,
+            }),
 
-          new Paragraph({
-            text: `출처: ${article.source || "-"}`,
-          }),
+            new Paragraph({
+              text: `출처: ${article.source || "-"}`,
+            }),
 
-          new Paragraph({
-            text: article.pubDate
-              ? `날짜: ${article.pubDate}`
-              : "",
-          }),
+            new Paragraph({
+              text: article.pubDate
+                ? `날짜: ${article.pubDate}`
+                : "",
+            }),
 
-          new Paragraph({
-            text: "",
-          }),
+            new Paragraph({
+              text: "",
+            }),
 
-          new Paragraph({
-            text: "[원문]",
-            heading: HeadingLevel.HEADING_2,
-          }),
+            new Paragraph({
+              text: "[원문]",
+              heading: HeadingLevel.HEADING_2,
+            }),
 
-          new Paragraph({
-            text,
-          }),
+            ...(text || "")
+              .split("\n\n")
+              .filter(Boolean)
+              .map(
+                (paragraph) =>
+                  new Paragraph({
+                    text: paragraph,
+                  })
+              ),
 
-          new Paragraph({
-            text: "",
-          }),
+            new Paragraph({
+              text: "",
+            }),
 
-          new Paragraph({
-            text: "[1회차 필사]",
-            heading: HeadingLevel.HEADING_2,
-          }),
+            new Paragraph({
+              text: "[1회차 필사]",
+              heading: HeadingLevel.HEADING_2,
+            }),
 
-          new Paragraph({
-            text: typed[0] || "",
-          }),
+            ...(typed[0] || "")
+              .split("\n\n")
+              .filter(Boolean)
+              .map(
+                (paragraph) =>
+                  new Paragraph({
+                    text: paragraph,
+                  })
+              ),
 
-          new Paragraph({
-            text: "",
-          }),
+            new Paragraph({
+              text: "",
+            }),
 
-          new Paragraph({
-            text: "[2회차 필사]",
-            heading: HeadingLevel.HEADING_2,
-          }),
+            new Paragraph({
+              text: "[2회차 필사]",
+              heading: HeadingLevel.HEADING_2,
+            }),
 
-          new Paragraph({
-            text: typed[1] || "",
-          }),
+            ...(typed[1] || "")
+              .split("\n\n")
+              .filter(Boolean)
+              .map(
+                (paragraph) =>
+                  new Paragraph({
+                    text: paragraph,
+                  })
+              ),
 
-          new Paragraph({
-            text: "",
-          }),
+            new Paragraph({
+              text: "",
+            }),
 
-          new Paragraph({
-            text: "[3회차 필사]",
-            heading: HeadingLevel.HEADING_2,
-          }),
+            new Paragraph({
+              text: "[3회차 필사]",
+              heading: HeadingLevel.HEADING_2,
+            }),
 
-          new Paragraph({
-            text: typed[2] || "",
-          }),
-        ],
-      },
-    ],
-  });
+            ...(typed[2] || "")
+              .split("\n\n")
+              .filter(Boolean)
+              .map(
+                (paragraph) =>
+                  new Paragraph({
+                    text: paragraph,
+                  })
+              ),
+          ],
+        },
+      ],
+    });
 
-  const blob = await Packer.toBlob(doc);
+    const blob = await Packer.toBlob(doc);
 
-  const now = new Date();
+    const now = new Date();
 
-  const yy = String(now.getFullYear()).slice(2);
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const dd = String(now.getDate()).padStart(2, "0");
+    const yy = String(now.getFullYear()).slice(2);
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
 
-  const safeTitle = (article.title || "기사필사")
-    .replace(/[\\/:*?"<>|]/g, "")
-    .trim()
-    .slice(0, 40);
+    const safeTitle = (article.title || "기사필사")
+      .replace(/[\\/:*?"<>|]/g, "")
+      .trim()
+      .slice(0, 40);
 
-  const fileName = `${yy}${mm}${dd}필사_${safeTitle}.docx`;
+    const fileName = `${yy}${mm}${dd}필사_${safeTitle}.docx`;
 
-  saveAs(blob, fileName);
-};
+    saveAs(blob, fileName);
+  };
   
   /**
    * Header height sync
