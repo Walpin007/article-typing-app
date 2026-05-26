@@ -405,3 +405,70 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
     justify-content: space-between;
   }
 }
+
+/* =============== TYPING OVERLAY MODE =============== */
+
+.typingLayerWrap{
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.typingHighlight,
+.typingInput.overlayMode{
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  padding: 12px;
+
+  overflow: auto;
+
+  font: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  border-radius: 12px;
+}
+
+.typingHighlight{
+  pointer-events: none;
+
+  background: var(--input-bg);
+
+  border: 1px solid var(--input-stroke);
+
+  color: var(--text);
+
+  z-index: 1;
+}
+
+.typingInput.overlayMode{
+  background: transparent;
+
+  color: transparent;
+
+  caret-color: var(--text);
+
+  border: 1px solid transparent;
+
+  z-index: 2;
+
+  resize: none;
+  outline: none;
+}
+
+/* 정상 문자 */
+.charOk{
+  color: var(--text);
+}
+
+/* 오타 문자 */
+.charError{
+  color: #ef4444;
+}
