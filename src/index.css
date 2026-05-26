@@ -470,5 +470,5 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
 
 /* 오타 문자 */
 .charError{
-  color: #ef4444;
+  color: #f87171;
 }
