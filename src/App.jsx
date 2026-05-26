@@ -81,6 +81,7 @@ export default function App() {
   const [round, setRound] = useState(1);
   const [typed, setTyped] = useState(["", "", ""]);
   const [paused, setPaused] = useState(false);
+  const [countdown, setCountdown] = useState(null);
 
   /**
    * Search state
@@ -181,6 +182,33 @@ export default function App() {
 
     return Boolean(a && b && a === b);
   }, [normalizedInput, normalizedText]);
+  
+    useEffect(() => {
+    if (
+      isFinished &&
+      !paused &&
+      countdown === null &&
+      round <= MAX_ROUNDS
+    ) {
+      setCountdown(3);
+    }
+  }, [isFinished, paused, countdown, round]);
+  
+    useEffect(() => {
+    if (countdown === null) return;
+
+    if (countdown <= 0) {
+      completeRoundAndCopy();
+      setCountdown(null);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCountdown((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   /**
    * Search
@@ -764,22 +792,23 @@ export default function App() {
           </div>
 
           <div className="info">
-            {!paused && isFinished && (
-              <button
-                className="btnApply"
-                onClick={completeRoundAndCopy}
-              >
-                이 회차 완료 및 내용 복사
-              </button>
+          
+            {countdown !== null && !paused && (
+              <span className="countdownText">
+                필사가 완료되었습니다. {countdown}초 뒤 복기 화면으로 이동합니다...
+              </span>
             )}
-
+          
             {paused && round < MAX_ROUNDS && (
               <span className="actions" style={{ marginLeft: 8 }}>
                 <span>필사 내용이 복사되었습니다. 복기 후 </span>
 
                 <button
                   onClick={() => {
+                    setCountdown(null);
+
                     setPaused(false);
+
                     setRound((prev) => prev + 1);
                   }}
                 >
