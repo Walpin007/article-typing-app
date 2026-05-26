@@ -147,20 +147,6 @@ export default function App() {
     return Number(((ok / normalizedInput.length) * 100).toFixed(1));
   }, [normalizedInput, normalizedText]);
 
-  /**
-   * 오타 여부
-   * textarea는 글자별 색상 지정이 어려우므로,
-   * 오타가 하나라도 있으면 입력창 전체 색상을 빨간색으로 바꿉니다.
-   */
-  const hasError = useMemo(() => {
-    for (let i = 0; i < normalizedInput.length; i++) {
-      if (normalizedInput[i] !== normalizedText[i]) {
-        return true;
-      }
-    }
-
-    return false;
-  }, [normalizedInput, normalizedText]);
 
   /**
    * 오타 하이라이트
