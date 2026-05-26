@@ -1,100 +1,69 @@
 /* =============== RESET & BASE =============== */
-* {
-  box-sizing: border-box;
-}
-
-html,
-body,
-#root {
-  height: 100%;
-  margin: 0;
-}
-
-:root {
-  --tracking: 0.02em;
-  --control-h: 40px;
-}
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+:root { --tracking: 0.02em; --control-h: 40px; }
 
 /* =============== THEME TOKENS =============== */
 /* Light */
-:root[data-theme="light"] {
-  --bg1: #f8fafc;
-  --bg2: #e5e7eb;
-  --glow1: rgba(59, 130, 246, 0.22);
-  --glow2: rgba(34, 197, 94, 0.18);
+:root[data-theme="light"]{
+  --bg1:#f8fafc; --bg2:#e5e7eb;
+  --glow1: rgba(59,130,246,.22);
+  --glow2: rgba(34,197,94,.18);
 
-  --card-bg: rgba(255, 255, 255, 0.68);
-  --card-stroke: rgba(15, 23, 42, 0.08);
+  --card-bg: rgba(255,255,255,0.68);
+  --card-stroke: rgba(15,23,42,0.08);
 
-  --text-strong: #0f172a;
-  --text: #111827;
-  --text-muted: #475569;
-  --text-muted-strong: #1f2937;
+  --text-strong:#0f172a;
+  --text:#111827;
+  --text-muted:#475569;
+  --text-muted-strong:#1f2937;
 
-  --input-bg: rgba(255, 255, 255, 0.95);
-  --input-stroke: rgba(15, 23, 42, 0.12);
+  --input-bg: rgba(255,255,255,.95);
+  --input-stroke: rgba(15,23,42,.12);
 
-  --accent: #2563eb;
-  --accent-2: #10b981;
+  --accent:#2563eb;
+  --accent-2:#10b981;
 
   --shadow: 0 10px 30px rgba(2, 6, 23, 0.08);
   --frost: blur(8px) saturate(120%);
 }
 
 /* Dark */
-:root[data-theme="dark"] {
-  --bg1: #0f172a;
-  --bg2: #1e293b;
-  --glow1: rgba(59, 130, 246, 0.35);
-  --glow2: rgba(34, 197, 94, 0.25);
+:root[data-theme="dark"]{
+  --bg1:#0f172a; --bg2:#1e293b;
+  --glow1: rgba(59,130,246,.35);
+  --glow2: rgba(34,197,94,.25);
 
-  --card-bg: rgba(255, 255, 255, 0.14);
-  --card-stroke: rgba(255, 255, 255, 0.28);
+  --card-bg: rgba(255,255,255,0.14);
+  --card-stroke: rgba(255,255,255,0.28);
 
-  --text-strong: #f1f5f9;
-  --text: #f8fafc;
-  --text-muted: #94a3b8;
-  --text-muted-strong: #e2e8f0;
+  --text-strong:#f1f5f9;
+  --text:#f8fafc;
+  --text-muted:#94a3b8;
+  --text-muted-strong:#e2e8f0;
 
-  --input-bg: rgba(15, 23, 42, 0.18);
-  --input-stroke: rgba(255, 255, 255, 0.18);
+  --input-bg: rgba(15,23,42,.18);
+  --input-stroke: rgba(255,255,255,.18);
 
-  --accent: #60a5fa;
-  --accent-2: #34d399;
+  --accent:#60a5fa;
+  --accent-2:#34d399;
 
   --shadow: 0 10px 30px rgba(2, 6, 23, 0.35);
   --frost: blur(10px) saturate(120%);
 }
 
 /* 시스템 선호 기본값 */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) {
-    color-scheme: dark;
-  }
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme]) { color-scheme: dark; }
 }
-
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme]) {
-    color-scheme: light;
-  }
+@media (prefers-color-scheme: light){
+  :root:not([data-theme]) { color-scheme: light; }
 }
 
 /* =============== GLOBAL LAYOUT =============== */
-body {
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    Segoe UI,
-    Roboto,
-    Helvetica,
-    Arial,
-    "Apple SD Gothic Neo",
-    "Noto Sans KR",
-    "Malgun Gothic",
-    "맑은 고딕",
-    "Nanum Gothic",
-    sans-serif;
+body{
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    "Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","맑은 고딕","Nanum Gothic", sans-serif;
   color: var(--text);
   background:
     radial-gradient(1200px 600px at 20% -10%, var(--glow1), transparent 60%),
@@ -103,151 +72,133 @@ body {
   letter-spacing: var(--tracking);
 }
 
-.container {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 12px;
-}
+.container{ height:100vh; display:flex; flex-direction:column; gap:12px; padding:12px; }
 
-/* =============== TOP STATUS / SEARCH BAR =============== */
-.status {
-  display: grid;
+/* =============== TOP BARS =============== */
+.status{
+  display:grid;
   grid-template-columns: 160px minmax(260px, 1fr) 220px;
-  align-items: center;
+  align-items:center;
   gap: 12px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid var(--card-stroke);
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--card-stroke);
   background: var(--card-bg);
   backdrop-filter: var(--frost);
   box-shadow: var(--shadow);
 }
 
-.status .left {
-  justify-self: start;
+.status .left{
+  justify-self:start;
 }
 
-.status .center {
-  justify-self: stretch;
+.status .center{
+  justify-self:stretch;
 }
 
-.status .right {
-  justify-self: end;
-  text-align: right;
+.status .right{
+  justify-self:end;
+  text-align:right;
 }
 
-.status > div {
-  font-weight: 600;
-  color: var(--text-muted-strong);
-  font-variant-numeric: tabular-nums;
+.status>div{
+  font-weight:600;
+  color:var(--text-muted-strong);
+  font-variant-numeric:tabular-nums;
 }
 
-.appTitle {
+.appTitle{
   font-size: 16px;
   font-weight: 800;
   color: var(--text-strong);
 }
 
-.topSearch {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
+.topSearch{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
 }
 
-.topSearch input {
-  flex: 1;
-  min-width: 0;
+.topSearch input{
+  flex:1;
+  min-width:0;
 }
 
-.topSearch button {
-  flex: 0 0 auto;
+.topSearch button{
+  flex:0 0 auto;
 }
 
-.topRight {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  white-space: nowrap;
+.topRight{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:12px;
+  white-space:nowrap;
 }
 
-.topRight .themeToggle {
-  margin-left: 0;
+.topRight .themeToggle{
+  margin-left:0;
 }
 
-/* =============== RESULTS BAR =============== */
-.resultsBar {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 10px 12px;
-  margin-top: -4px;
-  border-radius: 14px;
-  border: 1px solid var(--card-stroke);
+.resultsBar{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--card-stroke);
   background: var(--card-bg);
   backdrop-filter: var(--frost);
   box-shadow: var(--shadow);
 }
 
-/* =============== FORM CONTROLS =============== */
-input,
-select {
-  height: var(--control-h);
-  padding: 0 12px;
-  border: 1px solid var(--input-stroke);
-  border-radius: 8px;
+.resultsBar{
+  margin-top:-4px;
+}
+
+/* =============== FORM CONTROLS (통일 높이) =============== */
+input, select {
+  border:1px solid var(--input-stroke);
   background: var(--input-bg);
-  color: var(--text);
+  color:var(--text);
+  border-radius:8px;
   font-weight: 500;
-  font-size: 14px;
-  line-height: 1.4;
-  outline: none;
-  transition: 0.15s ease;
+  font-size:14px;
+  line-height:1.4;
+  outline:none;
+  transition:.15s ease;
+  height: var(--control-h);
+  padding: 0 12px;             /* 높이 고정 시 세로 패딩 0 */
   appearance: none;
   -webkit-appearance: none;
 }
+select{ min-width:280px; }
 
-select {
-  min-width: 280px;
-}
-
-button {
+/* 버튼: 플랫 + 동일 높이(셀렉트와 정확히 같게) */
+button{
+  border:1px solid var(--input-stroke);
+  background: var(--accent);
+  color:white;
+  border-radius:8px;
+  font-weight:600;
+  font-size:14px;
+  line-height:1;               /* 높이 계산에 간섭 없도록 */
+  cursor:pointer;
+  transition: background-color .2s ease, transform .05s ease;
+  box-shadow:none;
   height: var(--control-h);
-  padding: 0 12px;
+  padding: 0 12px;             /* ✅ 드롭박스와 동일 */
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid var(--input-stroke);
-  border-radius: 8px;
-  background: var(--accent);
-  color: white;
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 1;
-  cursor: pointer;
-  box-shadow: none;
-  transition:
-    background-color 0.2s ease,
-    transform 0.05s ease;
 }
+button:hover{ background: color-mix(in oklab, var(--accent) 90%, white); }
+button:active{ transform: translateY(1px); }
+button[disabled]{ opacity:.6; cursor:not-allowed; }
 
-button:hover {
-  background: color-mix(in oklab, var(--accent) 90%, white);
-}
-
-button:active {
-  transform: translateY(1px);
-}
-
-button[disabled] {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
+/* 툴바/결과바 안의 컨트롤에 강제 적용(우선순위↑) */
 .resultsBar select,
 .resultsBar button,
 .topSearch input,
@@ -256,110 +207,65 @@ button[disabled] {
   padding: 0 12px;
 }
 
-/* =============== THEME TOGGLE =============== */
-.themeToggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
+/* 테마 토글 */
+.themeToggle{ display:inline-flex; align-items:center; gap:8px; margin-left:auto; }
+.switch{
+  --w:42px; --h:24px;
+  position:relative; width:var(--w); height:var(--h);
+  border-radius:999px; border:1px solid var(--input-stroke);
+  background: var(--input-bg); cursor:pointer;
 }
-
-.switch {
-  --w: 42px;
-  --h: 24px;
-  position: relative;
-  width: var(--w);
-  height: var(--h);
-  border-radius: 999px;
-  border: 1px solid var(--input-stroke);
-  background: var(--input-bg);
-  cursor: pointer;
+.switch .knob{
+  position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%;
+  background:white; transition: transform .2s ease; box-shadow: 0 1px 4px rgba(0,0,0,.25);
 }
+.switch.on .knob{ transform: translateX(18px); }
 
-.switch .knob {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: white;
-  transition: transform 0.2s ease;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
-}
-
-.switch.on .knob {
-  transform: translateX(18px);
-}
-
-/* =============== MAIN GRID =============== */
-.grid {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  gap: 12px;
+/* =============== GRID (좌우 2컬럼) =============== */
+.grid{
+  flex:1; min-height:0; display:grid; gap:12px;
   grid-template-columns: 1fr 1fr;
 }
+@media (max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
 
-/* =============== PANES =============== */
-.pane {
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  border-radius: 16px;
-  border: 1px solid var(--card-stroke);
-  background: var(--card-bg);
-  backdrop-filter: var(--frost);
-  box-shadow: var(--shadow);
+/* 카드 */
+.pane{
+  display:flex; flex-direction:column; min-height:0;
+  border-radius:16px; border:1px solid var(--card-stroke);
+  background: var(--card-bg); backdrop-filter: var(--frost); box-shadow: var(--shadow);
+}
+.pane>header{
+  padding:12px 14px; border-bottom:1px solid color-mix(in oklab, var(--card-stroke) 70%, transparent);
+  font-weight:700; color:var(--text-strong); display:flex; align-items:center; gap:8px;
 }
 
-.pane > header {
-  padding: 12px 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid color-mix(in oklab, var(--card-stroke) 70%, transparent);
-  color: var(--text-strong);
-  font-weight: 700;
+/* 내부 스크롤 컨테이너: flex로 바꿔서 자식이 꽉 차게 */
+.scroll{
+  flex:1; min-height:0; overflow:hidden; position:relative;
+  display:flex; flex-direction:column; /* ✅ 핵심 */
 }
 
-.scroll {
-  flex: 1;
-  min-height: 0;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* =============== ARTICLE VIEW =============== */
-.articleView {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
+/* 좌측 기사: 자식이 남은 공간을 모두 차지 */
+.articleView{
+  flex:1;                       /* ✅ 핵심 */
+  min-height:0;
+  overflow:auto;
   scrollbar-gutter: stable both-edges;
-  padding: 14px 18px 30px 14px;
+  padding:14px 18px 30px 14px;
   display: flex;
   flex-direction: column;
 }
-
-.articleText {
-  white-space: pre-wrap;
-  word-break: break-word;
-  margin: 0;
+.articleText{
+  white-space: pre-line; word-break: break-word; margin:0;
+  font-size:16px; line-height:1.7; letter-spacing: var(--tracking);
   color: var(--text);
-  font-size: 16px;
-  line-height: 1.7;
-  letter-spacing: var(--tracking);
 }
-
-.editorInput {
+/* 원문 편집 Textarea가 세로 공간을 전부 쓰도록 */
+.editorInput{
   flex: 1;
   min-height: 0;
   width: 100%;
   resize: none;
-  overflow: auto;
-  padding: 12px;
   border: 1px solid var(--input-stroke);
   border-radius: 12px;
   background: var(--input-bg);
@@ -367,205 +273,93 @@ button[disabled] {
   caret-color: var(--text);
   font: inherit;
   line-height: inherit;
+  padding: 12px;
+  overflow:auto;
 }
 
-/* =============== TYPING BOX =============== */
+/* 우측 필사(오버레이 제거) */
 .typingBox{
-  flex:1;
+  flex:1;                       /* ✅ 카드 내부에서 남은 높이 채우기 */
   min-height:0;
-  display:flex;
-  flex-direction:column;
+  display:flex; flex-direction:column;
   overflow:hidden;
   padding:12px 18px 12px 12px;
-
-  font-family:
-    "SF Mono",
-    "Roboto Mono",
-    "Noto Sans Mono CJK KR",
-    monospace;
-
-  font-size:16px;
-  line-height:1.7;
-
-  letter-spacing: normal;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size:16px; line-height:1.7; letter-spacing: var(--tracking);
 }
-
-/* overlay wrapper */
-.typingLayerWrap {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-}
-
-/* overlay + textarea common */
-.typingHighlight,
-.typingInput.overlayMode{
-  position:absolute;
-  inset:0;
-
+.typingInput{
+  flex:1;                       /* ✅ textarea 자체가 세로로 최대 확장 */
+  min-height:0;
   width:100%;
-  height:100%;
-
-  padding:12px;
-
-  overflow:auto;
-
-  font:inherit;
-  line-height:inherit;
-
-  letter-spacing: normal;
-
-  white-space:pre-wrap;
-  word-break:break-word;
-
-  border-radius:12px;
-}
-
-/* highlight layer */
-.typingHighlight {
-  z-index: 1;
-  pointer-events: none;
-  border: 1px solid var(--input-stroke);
+  resize:none; border:none; outline:none;
   background: var(--input-bg);
-  color: var(--text);
+  color: var(--text); caret-color: var(--text);
+  font: inherit; line-height: inherit; overflow: auto; padding: 12px;
+  border: 1px solid var(--input-stroke); border-radius: 12px;
 }
+.typingInput.error{ color:#ef4444; caret-color:#ef4444; } /* 오타 시 전체 빨강 */
 
-/* textarea layer */
-.typingInput.overlayMode{
-  background:transparent;
-
-  color:transparent;
-
-  caret-color:var(--text);
-
-  border:none;
-
-  z-index:2;
-
-  resize:none;
-  outline:none;
-
-  -webkit-text-size-adjust:100%;
-  text-size-adjust:100%;
-
-  transform:translateZ(0);
-}
-
-/* 글자별 표시 */
-.charOk {
-  color: var(--text);
-}
-
-.charError {
-  color: #f87171;
-}
-
-/* placeholder */
-.typingInput.overlayMode::placeholder {
+/* 보조 UI */
+.placeholderInline{ color:var(--text-muted); font-style: italic; margin-bottom:8px; }
+.footer-gap-3{ height:3.2em; }
+.info{
   color: var(--text-muted);
-}
-
-/* =============== INFO / FOOTER / LOADING =============== */
-.placeholderInline {
-  color: var(--text-muted);
-  font-style: italic;
-  margin-bottom: 8px;
-}
-
-.footer-gap-3 {
-  height: 3.2em;
-}
-
-.info {
+  font-size: 12px;
+  padding: 0 12px;
   height: 34px;
   min-height: 34px;
-  padding: 0 12px;
   display: flex;
   align-items: center;
   border-top: 1px solid color-mix(in oklab, var(--card-stroke) 70%, transparent);
-  color: var(--text-muted);
-  font-size: 12px;
 }
 
-.info button {
-  height: 26px;
-  min-height: 26px;
-  max-height: 26px;
-  padding: 0 10px;
-  border-radius: 7px;
-  font-size: 12px;
-  line-height: 1;
+/* 로딩 */
+.loadingRow{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; color:var(--text-muted-strong); font-size:14px;
 }
-
-.info .actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+.spinner{
+  width:16px; height:16px; border:2px solid color-mix(in oklab, var(--text) 25%, transparent);
+  border-top-color: var(--accent); border-radius:50%; animation: spin .8s linear infinite; display:inline-block;
 }
+@keyframes spin{ to { transform: rotate(360deg); } }
 
-.loadingRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  color: var(--text-muted-strong);
-  font-size: 14px;
-}
-
-.spinner {
-  width: 16px;
-  height: 16px;
-  display: inline-block;
-  border: 2px solid color-mix(in oklab, var(--text) 25%, transparent);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.footer {
-  margin-top: auto;
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid var(--card-stroke);
-  background: var(--card-bg);
-  backdrop-filter: var(--frost);
-  box-shadow: var(--shadow);
-  color: var(--text-muted);
-  text-align: center;
-  font-size: 13px;
+/* 푸터 */
+.footer{
+  text-align:center; font-size:13px; color:var(--text-muted); padding:10px; border-radius:12px;
+  border:1px solid var(--card-stroke);
+  background: var(--card-bg); backdrop-filter: var(--frost); box-shadow: var(--shadow);
+  margin-top:auto;
 }
 
 /* =============== RESULTS BAR LAYOUT FIX =============== */
+
+/* 기사 선택 드롭다운: 더 넓게 */
 .resultsBar .articleSelect {
   flex: 1 1 520px;
   min-width: 420px;
   max-width: none;
 }
 
+/* 정리본/원문텍스트 선택 드롭다운: 텍스트 길이에 맞게 축소 */
 .resultsBar .viewModeSelect {
   flex: 0 0 auto;
   width: 190px;
   min-width: 190px;
 }
 
-.resultsBar .btnApply,
-.info .btnApply {
+/* 적용 버튼: 초록색 */
+.resultsBar .btnApply {
   background: var(--accent-2);
   color: white;
   border-color: color-mix(in oklab, var(--accent-2) 70%, black);
 }
 
-.resultsBar .btnApply:hover,
-.info .btnApply:hover {
+.resultsBar .btnApply:hover {
   background: color-mix(in oklab, var(--accent-2) 88%, white);
 }
 
+/* 취소 버튼: 빨간색 */
 .resultsBar .btnCancel {
   background: #ef4444;
   color: white;
@@ -576,11 +370,22 @@ button[disabled] {
   background: color-mix(in oklab, #ef4444 88%, white);
 }
 
-/* =============== RESPONSIVE =============== */
-@media (max-width: 980px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
+/* =============== INFO BAR BUTTON FIX =============== */
+
+.info button {
+  height: 26px;
+  min-height: 26px;
+  max-height: 26px;
+  padding: 0 10px;
+  font-size: 12px;
+  line-height: 1;
+  border-radius: 7px;
+}
+
+.info .actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 @media (max-width: 760px) {
@@ -598,12 +403,5 @@ button[disabled] {
 
   .topRight {
     justify-content: space-between;
-  }
-
-  .resultsBar .articleSelect,
-  .resultsBar .viewModeSelect {
-    width: 100%;
-    min-width: 0;
-    flex: 1 1 100%;
   }
 }
