@@ -27,6 +27,9 @@ const normalizeForCompare = (value = "") => {
 
     // 백틱/악센트/프라임 기호도 홑따옴표로 통일
     .replace(/[`´′]/g, "'")
+    
+    // 물결표류 통일
+    .replace(/[～∼˜]/g, "~")
 
     // 긴 대시류 통일
     .replace(/[–—―]/g, "-")
