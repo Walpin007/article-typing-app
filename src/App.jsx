@@ -119,6 +119,8 @@ export default function App() {
   const headerRightRef = useRef(null);
   const leftRef = useRef(null);
   const typingRef = useRef(null);
+  // 마지막으로 자동 스크롤한 문단
+  const lastAutoScrolledParagraphRef = useRef(-1);
 
   /**
    * Current text / input
@@ -142,6 +144,120 @@ export default function App() {
   const normalizedText = useMemo(() => {
     return normalizeForCompare(text);
   }, [text]);
+  
+  /**
+   * 원문을 문단과 줄바꿈 구간으로 나눕니다.
+   * 화면에 보이는 원문 형태는 그대로 유지하면서
+   * 각 문단의 정규화 기준 위치를 기록합니다.
+   */
+  const articleSegments = useMemo(() => {
+    const segments = text.split(/(\n{2,})/);
+
+    let normalizedCursor = 0;
+    let paragraphIndex = 0;
+
+    return segments.map((segment, segmentIndex) => {
+      const normalizedLength = normalizeForCompare(segment).length;
+      const isSeparator = segmentIndex % 2 === 1;
+
+      const item = {
+        text: segment,
+        isSeparator,
+        start: normalizedCursor,
+        end: normalizedCursor + normalizedLength,
+        paragraphIndex: null,
+      };
+
+      if (!isSeparator && segment.length > 0) {
+        item.paragraphIndex = paragraphIndex;
+        paragraphIndex++;
+      }
+
+      normalizedCursor += normalizedLength;
+
+      return item;
+    });
+  }, [text]);
+
+  /**
+   * 현재 필사 중인 문단 찾기
+   */
+  const currentParagraphIndex = useMemo(() => {
+    if (!normalizedInput.length) return -1;
+
+    const position = normalizedInput.length;
+
+    for (const segment of articleSegments) {
+      if (
+        !segment.isSeparator &&
+        segment.paragraphIndex !== null &&
+        position > segment.start &&
+        position <= segment.end
+      ) {
+        return segment.paragraphIndex;
+      }
+    }
+
+    return -1;
+  }, [normalizedInput, articleSegments]);
+
+  /**
+   * 현재 필사 문단이 원문 화면 아래쪽으로 내려오면
+   * 자동으로 위쪽으로 이동시킵니다.
+   */
+  useEffect(() => {
+    if (currentParagraphIndex < 0) return;
+
+    const scrollContainer = leftRef.current;
+    if (!scrollContainer) return;
+
+    // 이미 이 문단에서 자동 스크롤했다면 다시 실행하지 않음
+    if (
+      lastAutoScrolledParagraphRef.current === currentParagraphIndex
+    ) {
+      return;
+    }
+
+    const target = scrollContainer.querySelector(
+      `[data-paragraph-index="${currentParagraphIndex}"]`
+    );
+
+    if (!target) return;
+
+    const containerRect =
+      scrollContainer.getBoundingClientRect();
+
+    const targetRect =
+      target.getBoundingClientRect();
+
+    // 현재 문단이 원문 프레임에서 어느 위치에 있는지
+    const relativeTop =
+      targetRect.top - containerRect.top;
+
+    // 화면의 70% 지점
+    const triggerPoint =
+      scrollContainer.clientHeight * 0.7;
+
+    // 현재 문단이 70% 아래에 있을 때만 스크롤
+    if (relativeTop >= triggerPoint) {
+      // 스크롤 후 현재 문단을 화면 약 25% 위치에 배치
+      const targetPoint =
+        scrollContainer.clientHeight * 0.25;
+
+      const nextScrollTop =
+        scrollContainer.scrollTop +
+        relativeTop -
+        targetPoint;
+
+      scrollContainer.scrollTo({
+        top: Math.max(0, nextScrollTop),
+        behavior: "smooth",
+      });
+
+      lastAutoScrolledParagraphRef.current =
+        currentParagraphIndex;
+    }
+  }, [currentParagraphIndex]);
 
   /**
    * Accuracy
@@ -538,6 +654,14 @@ export default function App() {
     editMode,
     selectedIdx,
   ]);
+  
+  useEffect(() => {
+    lastAutoScrolledParagraphRef.current = -1;
+
+    if (leftRef.current) {
+      leftRef.current.scrollTop = 0;
+    }
+  }, [round, text]);
 
   useEffect(() => {
     const onResize = () => {
@@ -740,8 +864,8 @@ export default function App() {
             </span>
           </header>
 
-          <div className="scroll">
-            <div ref={leftRef} className="articleView mono">
+          <div className="scroll" ref={leftRef}>
+            <div className="articleView mono">
               {editMode ? (
                 <textarea
                   className="editorInput mono"
@@ -752,11 +876,25 @@ export default function App() {
                 />
               ) : (
                 <div className="articleText">
-                  {article.content || article.plain
-                    ? viewMode === "clean"
-                      ? article.content
-                      : article.plain
-                    : ""}
+                  {articleSegments.map((segment, index) => {
+                    // 문단 사이 줄바꿈은 기존 그대로 출력
+                    if (segment.isSeparator) {
+                      return (
+                        <span key={`separator-${index}`}>
+                          {segment.text}
+                        </span>
+                      );
+                    }
+
+                    return (
+                      <span
+                        key={`paragraph-${index}`}
+                        data-paragraph-index={segment.paragraphIndex}
+                      >
+                        {segment.text}
+                      </span>
+                    );
+                  })}
                 </div>
               )}
 
