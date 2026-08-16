@@ -405,3 +405,34 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
     justify-content: space-between;
   }
 }
+
+/* =============== TEMP SCROLL DEBUG =============== */
+
+.scrollDebug {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 99999;
+
+  width: 220px;
+  padding: 12px;
+
+  background: rgba(0, 0, 0, 0.88);
+  color: #ffffff;
+
+  border-radius: 10px;
+
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.5;
+
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+
+  pointer-events: none;
+}
+
+.scrollDebug strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #7dd3fc;
+}

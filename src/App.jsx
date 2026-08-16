@@ -85,6 +85,16 @@ export default function App() {
   const [typed, setTyped] = useState(["", "", ""]);
   const [paused, setPaused] = useState(false);
   const [countdown, setCountdown] = useState(null);
+  const [scrollDebug, setScrollDebug] = useState({
+    paragraph: -1,
+    targetFound: false,
+    relativeTop: 0,
+    visibleHeight: 0,
+    triggerPoint: 0,
+    scrollTop: 0,
+    scrollHeight: 0,
+    executed: false,
+  });
 
   /**
    * Search state
@@ -242,26 +252,38 @@ export default function App() {
   useEffect(() => {
     const scrollContainer = leftRef.current;
 
-    if (!scrollContainer) return;
-    if (currentParagraphIndex < 0) return;
-    if (editMode) return;
+    if (!scrollContainer) {
+      setScrollDebug((prev) => ({
+        ...prev,
+        paragraph: currentParagraphIndex,
+        targetFound: false,
+        executed: false,
+      }));
 
-    /**
-     * 같은 문단에서 이미 자동 스크롤했다면
-     * 매 글자 입력마다 반복하지 않습니다.
-     */
-    if (
-      lastAutoScrolledParagraphRef.current ===
-      currentParagraphIndex
-    ) {
       return;
     }
+
+    if (currentParagraphIndex < 0) return;
+    if (editMode) return;
 
     const target = scrollContainer.querySelector(
       `[data-paragraph-index="${currentParagraphIndex}"]`
     );
 
-    if (!target) return;
+    if (!target) {
+      setScrollDebug({
+        paragraph: currentParagraphIndex,
+        targetFound: false,
+        relativeTop: 0,
+        visibleHeight: scrollContainer.clientHeight,
+        triggerPoint: scrollContainer.clientHeight * 0.7,
+        scrollTop: scrollContainer.scrollTop,
+        scrollHeight: scrollContainer.scrollHeight,
+        executed: false,
+      });
+
+      return;
+    }
 
     const containerRect =
       scrollContainer.getBoundingClientRect();
@@ -269,29 +291,38 @@ export default function App() {
     const targetRect =
       target.getBoundingClientRect();
 
-    /**
-     * 현재 문단 시작 위치가
-     * 기사 프레임 내부에서 어느 높이에 있는지 계산
-     */
     const relativeTop =
       targetRect.top - containerRect.top;
 
     const visibleHeight =
       scrollContainer.clientHeight;
 
-    if (!visibleHeight) return;
-
-    /**
-     * 현재 문단이 화면 높이의 70% 지점에 도달하면 실행
-     */
     const triggerPoint =
       visibleHeight * 0.7;
 
-    if (relativeTop >= triggerPoint) {
-      /**
-       * 자동 스크롤 후 현재 문단을
-       * 화면 위쪽 약 20% 위치에 배치
-       */
+    const shouldScroll =
+      relativeTop >= triggerPoint;
+
+    setScrollDebug({
+      paragraph: currentParagraphIndex,
+      targetFound: true,
+      relativeTop: Math.round(relativeTop),
+      visibleHeight: Math.round(visibleHeight),
+      triggerPoint: Math.round(triggerPoint),
+      scrollTop: Math.round(scrollContainer.scrollTop),
+      scrollHeight: Math.round(scrollContainer.scrollHeight),
+      executed: shouldScroll,
+    });
+
+    // 같은 문단에서 이미 자동 스크롤했다면 중단
+    if (
+      lastAutoScrolledParagraphRef.current ===
+      currentParagraphIndex
+    ) {
+      return;
+    }
+
+    if (shouldScroll) {
       const targetPoint =
         visibleHeight * 0.2;
 
@@ -1315,6 +1346,43 @@ export default function App() {
       <footer className="footer">
         © 2025 Park Hyung-jo. All rights reserved.
       </footer>
+
+      <div className="scrollDebug">
+        <strong>SCROLL DEBUG</strong>
+
+        <div>
+          현재 문단: {scrollDebug.paragraph}
+        </div>
+
+        <div>
+          문단 DOM: {scrollDebug.targetFound ? "FOUND" : "NOT FOUND"}
+        </div>
+
+        <div>
+          문단 위치: {scrollDebug.relativeTop}px
+        </div>
+
+        <div>
+          화면 높이: {scrollDebug.visibleHeight}px
+        </div>
+
+        <div>
+          작동 기준: {scrollDebug.triggerPoint}px
+        </div>
+
+        <div>
+          현재 scrollTop: {scrollDebug.scrollTop}px
+        </div>
+
+        <div>
+          전체 높이: {scrollDebug.scrollHeight}px
+        </div>
+
+        <div>
+          스크롤 조건: {scrollDebug.executed ? "YES" : "NO"}
+        </div>
+      </div>
+
     </div>
   );
 }
