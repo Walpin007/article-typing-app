@@ -19,25 +19,12 @@ const MAX_ROUNDS = 3;
  */
 const normalizeForCompare = (value = "") => {
   return value
-    // 쌍따옴표류 통일
-    .replace(/[""„‟]/g, '"')
-
-    // 홑따옴표류 통일
-    .replace(/[‘’‚‛]/g, "'")
-
-    // 백틱/악센트/프라임 기호도 홑따옴표로 통일
-    .replace(/[`'′]/g, "'")
-
-    // 물결표류 통일
-    .replace(/[～∼˜]/g, "~")
-
-    // 긴 대시류 통일
-    .replace(/[–--―\-]/g, "-")
-
-    // 말줄임표 통일
-    .replace(/…/g, "...")
-
-    // 특수 공백을 일반 공백으로 통일
+    .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+    .replace(/[\u0060\u00B4\u2032]/g, "'")
+    .replace(/[\uFF5E\u223C\u02DC]/g, "~")
+    .replace(/[\u2013\u2014\u2015]/g, "-")
+    .replace(/\u2026/g, "...")
     .replace(/\u00A0/g, " ");
 };
 
