@@ -20,19 +20,19 @@ const MAX_ROUNDS = 3;
 const normalizeForCompare = (value = "") => {
   return value
     // 쌍따옴표류 통일
-    .replace(/[“”„‟]/g, '"')
+    .replace(/[""„‟]/g, '"')
 
     // 홑따옴표류 통일
     .replace(/[‘’‚‛]/g, "'")
 
     // 백틱/악센트/프라임 기호도 홑따옴표로 통일
-    .replace(/[`´′]/g, "'")
-    
+    .replace(/[`'′]/g, "'")
+
     // 물결표류 통일
     .replace(/[～∼˜]/g, "~")
 
     // 긴 대시류 통일
-    .replace(/[–—―]/g, "-")
+    .replace(/[–--―]/g, "-")
 
     // 말줄임표 통일
     .replace(/…/g, "...")
@@ -117,9 +117,13 @@ export default function App() {
    */
   const headerLeftRef = useRef(null);
   const headerRightRef = useRef(null);
+
+  // 실제 원문 스크롤 컨테이너 (.articleView)
   const leftRef = useRef(null);
+
   const typingRef = useRef(null);
-  // 마지막으로 자동 스크롤한 문단
+
+  // 마지막으로 자동 스크롤한 문단 번호
   const lastAutoScrolledParagraphRef = useRef(-1);
 
   /**
@@ -144,21 +148,27 @@ export default function App() {
   const normalizedText = useMemo(() => {
     return normalizeForCompare(text);
   }, [text]);
-  
+
   /**
    * 원문을 문단과 줄바꿈 구간으로 나눕니다.
-   * 화면에 보이는 원문 형태는 그대로 유지하면서
-   * 각 문단의 정규화 기준 위치를 기록합니다.
+   *
+   * 기사에 따라 문단 사이가
+   * \n 하나 또는 \n\n으로 들어올 수 있으므로
+   * 줄바꿈 1개 이상을 문단 경계로 인식합니다.
+   *
+   * 화면에 표시되는 줄바꿈 자체는 그대로 유지합니다.
    */
   const articleSegments = useMemo(() => {
-    const segments = text.split(/(\n{2,})/);
+    const segments = text.split(/(\r?\n+)/);
 
     let normalizedCursor = 0;
     let paragraphIndex = 0;
 
-    return segments.map((segment, segmentIndex) => {
-      const normalizedLength = normalizeForCompare(segment).length;
-      const isSeparator = segmentIndex % 2 === 1;
+    return segments.map((segment) => {
+      const isSeparator = /^\r?\n+$/.test(segment);
+
+      const normalizedLength =
+        normalizeForCompare(segment).length;
 
       const item = {
         text: segment,
@@ -170,7 +180,7 @@ export default function App() {
 
       if (!isSeparator && segment.length > 0) {
         item.paragraphIndex = paragraphIndex;
-        paragraphIndex++;
+        paragraphIndex += 1;
       }
 
       normalizedCursor += normalizedLength;
@@ -180,40 +190,69 @@ export default function App() {
   }, [text]);
 
   /**
-   * 현재 필사 중인 문단 찾기
+   * 현재 필사 중인 문단 계산
+   *
+   * 입력된 문자 수가 원문의 어느 문단 범위에
+   * 들어가 있는지 계산합니다.
    */
   const currentParagraphIndex = useMemo(() => {
-    if (!normalizedInput.length) return -1;
+    if (!normalizedInput.length) {
+      return 0;
+    }
 
     const position = normalizedInput.length;
 
+    let lastParagraphIndex = 0;
+
     for (const segment of articleSegments) {
+      if (segment.isSeparator) continue;
+      if (segment.paragraphIndex === null) continue;
+
+      lastParagraphIndex = segment.paragraphIndex;
+
       if (
-        !segment.isSeparator &&
-        segment.paragraphIndex !== null &&
-        position > segment.start &&
+        position >= segment.start &&
         position <= segment.end
       ) {
         return segment.paragraphIndex;
       }
     }
 
-    return -1;
+    return lastParagraphIndex;
   }, [normalizedInput, articleSegments]);
 
   /**
-   * 현재 필사 문단이 원문 화면 아래쪽으로 내려오면
-   * 자동으로 위쪽으로 이동시킵니다.
+   * 새 기사 또는 새 회차 시작 시
+   * 원문 스크롤을 처음으로 되돌리고
+   * 자동 스크롤 기록도 초기화합니다.
    */
   useEffect(() => {
-    if (currentParagraphIndex < 0) return;
+    lastAutoScrolledParagraphRef.current = -1;
 
+    if (leftRef.current) {
+      leftRef.current.scrollTop = 0;
+    }
+  }, [round, text]);
+
+  /**
+   * 현재 필사 중인 문단이
+   * 원문 화면 아래쪽 70% 지점까지 내려오면
+   * 해당 문단을 화면 약 20% 위치까지 올립니다.
+   */
+  useEffect(() => {
     const scrollContainer = leftRef.current;
-    if (!scrollContainer) return;
 
-    // 이미 이 문단에서 자동 스크롤했다면 다시 실행하지 않음
+    if (!scrollContainer) return;
+    if (currentParagraphIndex < 0) return;
+    if (editMode) return;
+
+    /**
+     * 같은 문단에서 이미 자동 스크롤했다면
+     * 매 글자 입력마다 반복하지 않습니다.
+     */
     if (
-      lastAutoScrolledParagraphRef.current === currentParagraphIndex
+      lastAutoScrolledParagraphRef.current ===
+      currentParagraphIndex
     ) {
       return;
     }
@@ -230,34 +269,56 @@ export default function App() {
     const targetRect =
       target.getBoundingClientRect();
 
-    // 현재 문단이 원문 프레임에서 어느 위치에 있는지
+    /**
+     * 현재 문단 시작 위치가
+     * 기사 프레임 내부에서 어느 높이에 있는지 계산
+     */
     const relativeTop =
       targetRect.top - containerRect.top;
 
-    // 화면의 70% 지점
+    const visibleHeight =
+      scrollContainer.clientHeight;
+
+    if (!visibleHeight) return;
+
+    /**
+     * 현재 문단이 화면 높이의 70% 지점에 도달하면 실행
+     */
     const triggerPoint =
-      scrollContainer.clientHeight * 0.7;
+      visibleHeight * 0.7;
 
-    // 현재 문단이 70% 아래에 있을 때만 스크롤
     if (relativeTop >= triggerPoint) {
-      // 스크롤 후 현재 문단을 화면 약 25% 위치에 배치
+      /**
+       * 자동 스크롤 후 현재 문단을
+       * 화면 위쪽 약 20% 위치에 배치
+       */
       const targetPoint =
-        scrollContainer.clientHeight * 0.25;
+        visibleHeight * 0.2;
 
-      const nextScrollTop =
-        scrollContainer.scrollTop +
-        relativeTop -
-        targetPoint;
+      const scrollAmount =
+        relativeTop - targetPoint;
+
+      const maxScrollTop =
+        scrollContainer.scrollHeight -
+        scrollContainer.clientHeight;
+
+      const nextScrollTop = Math.min(
+        Math.max(
+          0,
+          scrollContainer.scrollTop + scrollAmount
+        ),
+        Math.max(0, maxScrollTop)
+      );
 
       scrollContainer.scrollTo({
-        top: Math.max(0, nextScrollTop),
+        top: nextScrollTop,
         behavior: "smooth",
       });
 
       lastAutoScrolledParagraphRef.current =
         currentParagraphIndex;
     }
-  }, [currentParagraphIndex]);
+  }, [currentParagraphIndex, editMode]);
 
   /**
    * Accuracy
@@ -273,13 +334,16 @@ export default function App() {
       }
     }
 
-    return Number(((ok / normalizedInput.length) * 100).toFixed(1));
+    return Number(
+      ((ok / normalizedInput.length) * 100).toFixed(1)
+    );
   }, [normalizedInput, normalizedText]);
 
   /**
    * 오타 여부
-   * textarea는 글자별 색상 지정이 어려우므로,
-   * 오타가 하나라도 있으면 입력창 전체 색상을 빨간색으로 바꿉니다.
+   *
+   * textarea는 글자별 색상 지정이 어려우므로
+   * 오타가 하나라도 있으면 입력창 전체를 빨간색 처리합니다.
    */
   const hasError = useMemo(() => {
     for (let i = 0; i < normalizedInput.length; i++) {
@@ -293,7 +357,6 @@ export default function App() {
 
   /**
    * 완료 여부
-   * 따옴표/대시/말줄임표 등은 정규화 기준으로 완료 처리합니다.
    */
   const isFinished = useMemo(() => {
     const a = normalizedInput.trim();
@@ -301,8 +364,8 @@ export default function App() {
 
     return Boolean(a && b && a === b);
   }, [normalizedInput, normalizedText]);
-  
-    useEffect(() => {
+
+  useEffect(() => {
     if (
       isFinished &&
       !paused &&
@@ -312,8 +375,8 @@ export default function App() {
       setCountdown(3);
     }
   }, [isFinished, paused, countdown, round]);
-  
-    useEffect(() => {
+
+  useEffect(() => {
     if (countdown === null) return;
 
     if (countdown <= 0) {
@@ -334,6 +397,7 @@ export default function App() {
    */
   const doSearch = async () => {
     const keyword = query.trim();
+
     if (!keyword || loading) return;
 
     setLoading(true);
@@ -342,7 +406,10 @@ export default function App() {
     setSelectedIdx("");
 
     try {
-      // ✅ 검색창에 URL을 넣은 경우: 검색 결과를 거치지 않고 바로 기사 추출
+      /**
+       * 검색창에 URL을 넣은 경우
+       * 검색 결과 없이 바로 기사 추출
+       */
       if (isValidUrl(keyword)) {
         const response = await fetch(
           `/api/extract?url=${encodeURIComponent(keyword)}`
@@ -351,7 +418,9 @@ export default function App() {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data?.error || "기사 본문 추출 실패");
+          throw new Error(
+            data?.error || "기사 본문 추출 실패"
+          );
         }
 
         const textLength =
@@ -365,7 +434,9 @@ export default function App() {
           title: data?.title || "직접 입력한 기사",
           snippet: "",
           link: keyword,
-          displayLink: data?.source || new URL(keyword).hostname,
+          displayLink:
+            data?.source ||
+            new URL(keyword).hostname,
           pubDate: data?.pubDate || "",
         };
 
@@ -374,52 +445,76 @@ export default function App() {
 
         setArticle({
           title: directOption.title,
-          source: `Direct/${(data?.source || directOption.displayLink || "").replace(
-            /^www\./,
+
+          source: `Direct/${(
+            data?.source ||
+            directOption.displayLink ||
             ""
-          )}`,
+          ).replace(/^www\./, "")}`,
+
           content: data?.text || "",
           plain: data?.plain || "",
           pubDate: data?.pubDate || "",
           textLength,
         });
 
-        setViewMode(data?.mode === "plain" ? "plain" : "clean");
+        setViewMode(
+          data?.mode === "plain"
+            ? "plain"
+            : "clean"
+        );
+
         setEditMode(false);
         setDraft("");
         setRound(1);
         setTyped(["", "", ""]);
         setPaused(false);
+        setCountdown(null);
+
+        lastAutoScrolledParagraphRef.current = -1;
 
         if (leftRef.current) {
           leftRef.current.scrollTop = 0;
         }
 
         requestAnimationFrame(syncHeaderHeights);
+
         return;
       }
 
-      // ✅ 기존 키워드 검색
+      /**
+       * 기존 키워드 검색
+       */
       const response = await fetch(
         `/api/search-mixed?q=${encodeURIComponent(keyword)}`
       );
 
       const data = await response.json();
-      const items = Array.isArray(data.items) ? data.items : [];
 
-      const opts = items.slice(0, 10).map((item, index) => ({
-        idx: index,
-        sourceType: item.sourceType,
-        title: item.title,
-        snippet: item.snippet,
-        link: item.link,
-        displayLink: item.displayLink,
-        pubDate: item.pubDate,
-      }));
+      const items =
+        Array.isArray(data.items)
+          ? data.items
+          : [];
+
+      const opts = items
+        .slice(0, 10)
+        .map((item, index) => ({
+          idx: index,
+          sourceType: item.sourceType,
+          title: item.title,
+          snippet: item.snippet,
+          link: item.link,
+          displayLink: item.displayLink,
+          pubDate: item.pubDate,
+        }));
 
       setOptions(opts);
     } catch (error) {
-      console.error("검색/기사 추출 오류:", error);
+      console.error(
+        "검색/기사 추출 오류:",
+        error
+      );
+
       setOptions([]);
     } finally {
       setHasSearched(true);
@@ -434,16 +529,20 @@ export default function App() {
     setSelectedIdx(idxStr);
 
     const idx = Number(idxStr);
+
     if (Number.isNaN(idx)) return;
 
     const selected = options[idx];
+
     if (!selected) return;
 
     setLoadingArticle(true);
 
     try {
       const response = await fetch(
-        `/api/extract?url=${encodeURIComponent(selected.link)}`
+        `/api/extract?url=${encodeURIComponent(
+          selected.link
+        )}`
       );
 
       const data = await response.json();
@@ -454,22 +553,44 @@ export default function App() {
           : data?.text?.length || 0;
 
       setArticle({
-        title: selected.title || data?.title || "",
+        title:
+          selected.title ||
+          data?.title ||
+          "",
+
         source: `${
-          selected.sourceType === "google" ? "Google" : "Naver"
-        }/${(data?.source || selected.displayLink || "").replace(/^www\./, "")}`,
+          selected.sourceType === "google"
+            ? "Google"
+            : "Naver"
+        }/${(
+          data?.source ||
+          selected.displayLink ||
+          ""
+        ).replace(/^www\./, "")}`,
+
         content: data?.text || "",
         plain: data?.plain || "",
-        pubDate: selected.pubDate || data?.pubDate || "",
+        pubDate:
+          selected.pubDate ||
+          data?.pubDate ||
+          "",
         textLength,
       });
 
-      setViewMode(data?.mode === "plain" ? "plain" : "clean");
+      setViewMode(
+        data?.mode === "plain"
+          ? "plain"
+          : "clean"
+      );
+
       setEditMode(false);
       setDraft("");
       setRound(1);
       setTyped(["", "", ""]);
       setPaused(false);
+      setCountdown(null);
+
+      lastAutoScrolledParagraphRef.current = -1;
 
       if (leftRef.current) {
         leftRef.current.scrollTop = 0;
@@ -477,7 +598,10 @@ export default function App() {
 
       requestAnimationFrame(syncHeaderHeights);
     } catch (error) {
-      console.error("기사 본문 추출 오류:", error);
+      console.error(
+        "기사 본문 추출 오류:",
+        error
+      );
     } finally {
       setLoadingArticle(false);
     }
@@ -491,11 +615,16 @@ export default function App() {
 
     setTyped((prev) => {
       const next = [...prev];
+
       next[round - 1] = value;
+
       return next;
     });
   };
 
+  /**
+   * 회차 완료
+   */
   const completeRoundAndCopy = async () => {
     try {
       await navigator.clipboard.writeText(input);
@@ -505,19 +634,27 @@ export default function App() {
 
     setPaused(true);
   };
-  
+
+  /**
+   * Word 저장
+   */
   const downloadWordFile = async () => {
     const doc = new Document({
       sections: [
         {
           children: [
             new Paragraph({
-              text: article.title || "기사 필사",
-              heading: HeadingLevel.HEADING_1,
+              text:
+                article.title ||
+                "기사 필사",
+              heading:
+                HeadingLevel.HEADING_1,
             }),
 
             new Paragraph({
-              text: `출처: ${article.source || "-"}`,
+              text: `출처: ${
+                article.source || "-"
+              }`,
             }),
 
             new Paragraph({
@@ -532,7 +669,8 @@ export default function App() {
 
             new Paragraph({
               text: "[원문]",
-              heading: HeadingLevel.HEADING_2,
+              heading:
+                HeadingLevel.HEADING_2,
             }),
 
             ...(text || "")
@@ -551,7 +689,8 @@ export default function App() {
 
             new Paragraph({
               text: "[1회차 필사]",
-              heading: HeadingLevel.HEADING_2,
+              heading:
+                HeadingLevel.HEADING_2,
             }),
 
             ...(typed[0] || "")
@@ -570,7 +709,8 @@ export default function App() {
 
             new Paragraph({
               text: "[2회차 필사]",
-              heading: HeadingLevel.HEADING_2,
+              heading:
+                HeadingLevel.HEADING_2,
             }),
 
             ...(typed[1] || "")
@@ -589,7 +729,8 @@ export default function App() {
 
             new Paragraph({
               text: "[3회차 필사]",
-              heading: HeadingLevel.HEADING_2,
+              heading:
+                HeadingLevel.HEADING_2,
             }),
 
             ...(typed[2] || "")
@@ -606,46 +747,81 @@ export default function App() {
       ],
     });
 
-    const blob = await Packer.toBlob(doc);
+    const blob =
+      await Packer.toBlob(doc);
 
     const now = new Date();
 
-    const yy = String(now.getFullYear()).slice(2);
-    const mm = String(now.getMonth() + 1).padStart(2, "0");
-    const dd = String(now.getDate()).padStart(2, "0");
+    const yy =
+      String(now.getFullYear()).slice(2);
 
-    const safeTitle = (article.title || "기사필사")
-      .replace(/[\\/:*?"<>|]/g, "")
-      .trim()
-      .slice(0, 40);
+    const mm =
+      String(now.getMonth() + 1).padStart(
+        2,
+        "0"
+      );
 
-    const fileName = `${yy}${mm}${dd}필사_${safeTitle}.docx`;
+    const dd =
+      String(now.getDate()).padStart(
+        2,
+        "0"
+      );
+
+    const safeTitle =
+      (
+        article.title ||
+        "기사필사"
+      )
+        .replace(/[\\/:*?"<>|]/g, "")
+        .trim()
+        .slice(0, 40);
+
+    const fileName =
+      `${yy}${mm}${dd}필사_${safeTitle}.docx`;
 
     saveAs(blob, fileName);
   };
-  
+
   /**
    * Header height sync
    */
   const syncHeaderHeights = () => {
-    const leftHeader = headerLeftRef.current;
-    const rightHeader = headerRightRef.current;
+    const leftHeader =
+      headerLeftRef.current;
 
-    if (!leftHeader || !rightHeader) return;
+    const rightHeader =
+      headerRightRef.current;
+
+    if (!leftHeader || !rightHeader) {
+      return;
+    }
 
     leftHeader.style.minHeight = "";
     rightHeader.style.minHeight = "";
 
-    const leftHeight = leftHeader.getBoundingClientRect().height;
-    const rightHeight = rightHeader.getBoundingClientRect().height;
-    const maxHeight = Math.max(leftHeight, rightHeight);
+    const leftHeight =
+      leftHeader.getBoundingClientRect().height;
 
-    leftHeader.style.minHeight = `${maxHeight}px`;
-    rightHeader.style.minHeight = `${maxHeight}px`;
+    const rightHeight =
+      rightHeader.getBoundingClientRect().height;
+
+    const maxHeight =
+      Math.max(
+        leftHeight,
+        rightHeight
+      );
+
+    leftHeader.style.minHeight =
+      `${maxHeight}px`;
+
+    rightHeader.style.minHeight =
+      `${maxHeight}px`;
   };
 
   useEffect(() => {
-    requestAnimationFrame(syncHeaderHeights);
+    requestAnimationFrame(
+      syncHeaderHeights
+    );
   }, [
     article.title,
     article.source,
@@ -654,39 +830,46 @@ export default function App() {
     editMode,
     selectedIdx,
   ]);
-  
-  useEffect(() => {
-    lastAutoScrolledParagraphRef.current = -1;
-
-    if (leftRef.current) {
-      leftRef.current.scrollTop = 0;
-    }
-  }, [round, text]);
 
   useEffect(() => {
     const onResize = () => {
-      requestAnimationFrame(syncHeaderHeights);
+      requestAnimationFrame(
+        syncHeaderHeights
+      );
     };
 
-    window.addEventListener("resize", onResize);
+    window.addEventListener(
+      "resize",
+      onResize
+    );
 
     return () => {
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener(
+        "resize",
+        onResize
+      );
     };
   }, []);
 
   return (
     <div className="container">
-            {/* 상단 상태/검색 바 */}
+      {/* 상단 상태/검색 바 */}
       <div className="status">
-        <div className="left appTitle">기사 필사</div>
+        <div className="left appTitle">
+          기사 필사
+        </div>
 
         <div className="center topSearch">
           <input
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) =>
+              setQuery(event.target.value)
+            }
             onKeyDown={(event) => {
-              if (event.key === "Enter" && !loading) {
+              if (
+                event.key === "Enter" &&
+                !loading
+              ) {
                 event.preventDefault();
                 doSearch();
               }
@@ -695,23 +878,45 @@ export default function App() {
             placeholder="키워드 또는 기사 링크를 입력하세요"
           />
 
-          <button onClick={doSearch} disabled={loading}>
-            {loading ? "검색 중…" : "검색"}
+          <button
+            onClick={doSearch}
+            disabled={loading}
+          >
+            {loading
+              ? "검색 중…"
+              : "검색"}
           </button>
         </div>
 
         <div className="right topRight">
-          <span>정확도: {accuracy}%</span>
+          <span>
+            정확도: {accuracy}%
+          </span>
 
-          <div className="themeToggle" title="테마 전환">
-            <span style={{ opacity: 0.85 }}>
-              {theme === "dark" ? "다크" : "라이트"}
+          <div
+            className="themeToggle"
+            title="테마 전환"
+          >
+            <span
+              style={{
+                opacity: 0.85,
+              }}
+            >
+              {theme === "dark"
+                ? "다크"
+                : "라이트"}
             </span>
 
             <div
-              className={`switch ${theme === "dark" ? "on" : ""}`}
+              className={`switch ${
+                theme === "dark"
+                  ? "on"
+                  : ""
+              }`}
               role="switch"
-              aria-checked={theme === "dark"}
+              aria-checked={
+                theme === "dark"
+              }
               onClick={toggleTheme}
             >
               <div className="knob" />
@@ -724,59 +929,101 @@ export default function App() {
       {options.length > 0 && (
         <div className="resultsBar">
           <label htmlFor="articleSelect">
-            기사 선택(최대 {Math.min(10, options.length)}개):
+            기사 선택(최대{" "}
+            {Math.min(
+              10,
+              options.length
+            )}
+            개):
           </label>
 
           <select
             id="articleSelect"
             className="articleSelect"
             value={selectedIdx}
-            onChange={(event) => loadSelectedArticle(event.target.value)}
+            onChange={(event) =>
+              loadSelectedArticle(
+                event.target.value
+              )
+            }
           >
-            <option value="" disabled>
-              — 선택하세요 —
+            <option
+              value=""
+              disabled
+            >
+              -- 선택하세요 --
             </option>
 
-            {options.map((option) => (
-              <option key={option.idx} value={option.idx}>
-                [{option.sourceType === "google"
-                  ? "Google"
-                  : option.sourceType === "naver"
-                    ? "Naver"
-                    : "Direct"}]{" "}
-                {option.title}
-                {article.title === option.title && article.textLength
-                  ? ` · ${article.textLength.toLocaleString()}자`
-                  : ""}
-              </option>
-            ))}
+            {options.map(
+              (option) => (
+                <option
+                  key={option.idx}
+                  value={option.idx}
+                >
+                  [
+                  {option.sourceType ===
+                  "google"
+                    ? "Google"
+                    : option.sourceType ===
+                        "naver"
+                      ? "Naver"
+                      : "Direct"}
+                  ]{" "}
+                  {option.title}
+
+                  {article.title ===
+                    option.title &&
+                  article.textLength
+                    ? ` · ${article.textLength.toLocaleString()}자`
+                    : ""}
+                </option>
+              )
+            )}
           </select>
 
           <select
             className="viewModeSelect"
             value={viewMode}
             onChange={(event) => {
-              setViewMode(event.target.value);
+              setViewMode(
+                event.target.value
+              );
+
               setEditMode(false);
               setDraft("");
             }}
-            disabled={!article.content && !article.plain}
+            disabled={
+              !article.content &&
+              !article.plain
+            }
           >
-            <option value="clean">정리본(클린)</option>
-            <option value="plain">원문텍스트(라이트)</option>
+            <option value="clean">
+              정리본(클린)
+            </option>
+
+            <option value="plain">
+              원문텍스트(라이트)
+            </option>
           </select>
 
           {!editMode ? (
             <button
               onClick={() => {
                 const base =
-                  (viewMode === "clean" ? article.content : article.plain) ||
-                  "";
+                  (
+                    viewMode ===
+                    "clean"
+                      ? article.content
+                      : article.plain
+                  ) || "";
 
                 setDraft(base);
                 setEditMode(true);
               }}
-              disabled={!article.content && !article.plain}
+              disabled={
+                !article.content &&
+                !article.plain
+              }
             >
               편집 모드
             </button>
@@ -785,18 +1032,27 @@ export default function App() {
               <button
                 className="btnApply"
                 onClick={() => {
-                  if (viewMode === "clean") {
-                    setArticle((prev) => ({
-                      ...prev,
-                      content: draft,
-                      textLength: draft.length,
-                    }));
+                  if (
+                    viewMode ===
+                    "clean"
+                  ) {
+                    setArticle(
+                      (prev) => ({
+                        ...prev,
+                        content: draft,
+                        textLength:
+                          draft.length,
+                      })
+                    );
                   } else {
-                    setArticle((prev) => ({
-                      ...prev,
-                      plain: draft,
-                      textLength: draft.length,
-                    }));
+                    setArticle(
+                      (prev) => ({
+                        ...prev,
+                        plain: draft,
+                        textLength:
+                          draft.length,
+                      })
+                    );
                   }
 
                   setEditMode(false);
@@ -818,7 +1074,7 @@ export default function App() {
           )}
         </div>
       )}
-      
+
       {/* 로딩 / 결과 없음 */}
       {loading && (
         <div className="loadingRow">
@@ -827,13 +1083,24 @@ export default function App() {
         </div>
       )}
 
-      {hasSearched && !loading && options.length === 0 && (
-        <div className="loadingRow" style={{ paddingTop: 0 }}>
-          <span style={{ opacity: 0.85 }}>
-            뉴스 결과가 없습니다. 검색어를 바꾸거나 더 구체적으로 입력해 보세요.
-          </span>
-        </div>
-      )}
+      {hasSearched &&
+        !loading &&
+        options.length === 0 && (
+          <div
+            className="loadingRow"
+            style={{
+              paddingTop: 0,
+            }}
+          >
+            <span
+              style={{
+                opacity: 0.85,
+              }}
+            >
+              뉴스 결과가 없습니다. 검색어를 바꾸거나 더 구체적으로 입력해 보세요.
+            </span>
+          </div>
+        )}
 
       {loadingArticle && (
         <div className="loadingRow">
@@ -847,54 +1114,93 @@ export default function App() {
         {/* 왼쪽: 기사 원문 */}
         <div className="pane">
           <header ref={headerLeftRef}>
-            {article.title || "기사 원문"}{" "}
-            <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
-              · 출처: {article.source || "-"}
+            {article.title ||
+              "기사 원문"}{" "}
+
+            <span
+              style={{
+                color:
+                  "var(--text-muted)",
+                fontWeight: 400,
+              }}
+            >
+              · 출처:{" "}
+              {article.source || "-"}
+
               {article.pubDate && (
                 <>
                   {" "}
                   · 날짜:{" "}
-                  {new Date(article.pubDate).toLocaleDateString("ko-KR", {
-                    year: "numeric",
-                    month: "2-digit",
-                    day: "2-digit",
-                  })}
+                  {new Date(
+                    article.pubDate
+                  ).toLocaleDateString(
+                    "ko-KR",
+                    {
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                    }
+                  )}
                 </>
               )}
             </span>
           </header>
 
-          <div className="scroll" ref={leftRef}>
-            <div className="articleView mono">
+          <div className="scroll">
+            <div
+              ref={leftRef}
+              className="articleView mono"
+            >
               {editMode ? (
                 <textarea
                   className="editorInput mono"
                   spellCheck="false"
                   value={draft}
-                  onChange={(event) => setDraft(event.target.value)}
+                  onChange={(event) =>
+                    setDraft(
+                      event.target.value
+                    )
+                  }
                   placeholder="여기서 직접 원문을 고칠 수 있어요."
                 />
               ) : (
                 <div className="articleText">
-                  {articleSegments.map((segment, index) => {
-                    // 문단 사이 줄바꿈은 기존 그대로 출력
-                    if (segment.isSeparator) {
+                  {articleSegments.map(
+                    (
+                      segment,
+                      index
+                    ) => {
+                      /**
+                       * 문단 사이 실제 줄바꿈은
+                       * 기존 문자 그대로 출력
+                       */
+                      if (
+                        segment.isSeparator
+                      ) {
+                        return (
+                          <span
+                            key={`separator-${index}`}
+                          >
+                            {
+                              segment.text
+                            }
+                          </span>
+                        );
+                      }
+
                       return (
-                        <span key={`separator-${index}`}>
+                        <span
+                          key={`paragraph-${index}`}
+                          data-paragraph-index={
+                            segment.paragraphIndex ??
+                            undefined
+                          }
+                        >
                           {segment.text}
                         </span>
                       );
                     }
-
-                    return (
-                      <span
-                        key={`paragraph-${index}`}
-                        data-paragraph-index={segment.paragraphIndex}
-                      >
-                        {segment.text}
-                      </span>
-                    );
-                  })}
+                  )}
                 </div>
               )}
 
@@ -909,68 +1215,99 @@ export default function App() {
 
         {/* 오른쪽: 필사 입력 */}
         <div className="pane">
-          <header ref={headerRightRef}>필사 입력</header>
+          <header ref={headerRightRef}>
+            필사 입력
+          </header>
 
           <div className="scroll">
             <div className="typingBox">
               <textarea
                 ref={typingRef}
-                className={`typingInput ${hasError ? "error" : ""}`}
+                className={`typingInput ${
+                  hasError
+                    ? "error"
+                    : ""
+                }`}
                 spellCheck="false"
                 value={input}
                 onChange={onChangeTyping}
                 disabled={
                   paused ||
-                  round > MAX_ROUNDS ||
-                  !(article.content || article.plain)
+                  round >
+                    MAX_ROUNDS ||
+                  !(
+                    article.content ||
+                    article.plain
+                  )
                 }
                 placeholder={
-                  text.length ? "" : "선택한 기사 원문을 그대로 타이핑하세요."
+                  text.length
+                    ? ""
+                    : "선택한 기사 원문을 그대로 타이핑하세요."
                 }
               />
-
             </div>
           </div>
 
           <div className="info">
-          
-            {countdown !== null && !paused && (
-              <span className="countdownText">
-                필사가 완료되었습니다. {countdown}초 뒤 복기 화면으로 이동합니다...
-              </span>
-            )}
-          
-            {paused && round < MAX_ROUNDS && (
-              <span className="actions" style={{ marginLeft: 8 }}>
-                <span>필사 내용이 복사되었습니다. 복기 후 </span>
+            {countdown !== null &&
+              !paused && (
+                <span className="countdownText">
+                  필사가 완료되었습니다.{" "}
+                  {countdown}초 뒤 복기
+                  화면으로 이동합니다...
+                </span>
+              )}
 
-                <button
-                  onClick={() => {
-                    setCountdown(null);
-
-                    setPaused(false);
-
-                    setRound((prev) => prev + 1);
+            {paused &&
+              round <
+                MAX_ROUNDS && (
+                <span
+                  className="actions"
+                  style={{
+                    marginLeft: 8,
                   }}
                 >
-                  다음 회차
-                </button>
-              </span>
-            )}
+                  <span>
+                    필사 내용이
+                    복사되었습니다.
+                    복기 후{" "}
+                  </span>
 
-            {paused && round === MAX_ROUNDS && (
-              <span className="actions">
-                <span>3회차 완료!</span>
+                  <button
+                    onClick={() => {
+                      setCountdown(null);
+                      setPaused(false);
 
-                <button
-                  className="btnApply"
-                  onClick={downloadWordFile}
-                >
-                  워드 저장
-                </button>
-              </span>
-            )}
-            
+                      setRound(
+                        (prev) =>
+                          prev + 1
+                      );
+                    }}
+                  >
+                    다음 회차
+                  </button>
+                </span>
+              )}
+
+            {paused &&
+              round ===
+                MAX_ROUNDS && (
+                <span className="actions">
+                  <span>
+                    3회차 완료!
+                  </span>
+
+                  <button
+                    className="btnApply"
+                    onClick={
+                      downloadWordFile
+                    }
+                  >
+                    워드 저장
+                  </button>
+                </span>
+              )}
           </div>
         </div>
       </div>
