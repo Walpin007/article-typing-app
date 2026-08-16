@@ -32,7 +32,7 @@ const normalizeForCompare = (value = "") => {
     .replace(/[～∼˜]/g, "~")
 
     // 긴 대시류 통일
-    .replace(/[–--―]/g, "-")
+    .replace(/[–--―\-]/g, "-")
 
     // 말줄임표 통일
     .replace(/…/g, "...")
