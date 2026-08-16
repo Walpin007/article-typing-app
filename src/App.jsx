@@ -189,8 +189,8 @@ export default function App() {
   /**
    * 현재 필사 중인 문단 계산
    *
-   * 입력된 문자 수가 원문의 어느 문단 범위에
-   * 들어가 있는지 계산합니다.
+   * 문단 사이 줄바꿈을 입력하고 있는 동안에는
+   * 직전 문단을 현재 문단으로 유지합니다.
    */
   const currentParagraphIndex = useMemo(() => {
     if (!normalizedInput.length) {
@@ -199,13 +199,31 @@ export default function App() {
 
     const position = normalizedInput.length;
 
-    let lastParagraphIndex = 0;
+    let previousParagraphIndex = 0;
 
     for (const segment of articleSegments) {
-      if (segment.isSeparator) continue;
-      if (segment.paragraphIndex === null) continue;
+      /**
+       * 문단 사이 줄바꿈 영역에 입력 위치가 있는 경우
+       * 다음 문단으로 넘어가기 전까지
+       * 직전 문단을 유지합니다.
+       */
+      if (segment.isSeparator) {
+        if (
+          position > segment.start &&
+          position < segment.end
+        ) {
+          return previousParagraphIndex;
+        }
 
-      lastParagraphIndex = segment.paragraphIndex;
+        continue;
+      }
+
+      if (segment.paragraphIndex === null) {
+        continue;
+      }
+
+      previousParagraphIndex =
+        segment.paragraphIndex;
 
       if (
         position >= segment.start &&
@@ -215,7 +233,7 @@ export default function App() {
       }
     }
 
-    return lastParagraphIndex;
+    return previousParagraphIndex;
   }, [normalizedInput, articleSegments]);
 
   /**
@@ -233,8 +251,10 @@ export default function App() {
 
   /**
    * 현재 필사 중인 문단이
-   * 원문 화면 아래쪽 70% 지점까지 내려오면
-   * 해당 문단을 화면 약 20% 위치까지 올립니다.
+   * - 원문 화면 아래쪽 70% 지점까지 내려오거나
+   * - 현재 화면 위쪽으로 완전히 벗어난 경우
+   *
+   * 해당 문단을 화면 약 20% 위치로 이동시킵니다.
    */
   useEffect(() => {
     const scrollContainer = leftRef.current;
@@ -278,17 +298,33 @@ export default function App() {
     const targetRect =
       target.getBoundingClientRect();
 
+    // 현재 문단의 시작점이 원문 프레임 내부에서 어디에 있는지 계산
     const relativeTop =
       targetRect.top - containerRect.top;
 
     const visibleHeight =
       scrollContainer.clientHeight;
 
+    if (!visibleHeight) return;
+
+    // 아래쪽 자동 스크롤 기준: 화면 높이의 70%
     const triggerPoint =
       visibleHeight * 0.7;
 
-    const shouldScroll =
+    // 스크롤 후 현재 문단이 위치할 목표 지점: 화면 높이의 20%
+    const targetPoint =
+      visibleHeight * 0.2;
+
+    // 현재 문단이 너무 아래쪽에 있는 경우
+    const shouldScrollDown =
       relativeTop >= triggerPoint;
+
+    // 잘못된 스크롤 등으로 현재 문단이 화면 위로 벗어난 경우
+    const shouldRecoverUp =
+      relativeTop < 0;
+
+    const shouldScroll =
+      shouldScrollDown || shouldRecoverUp;
 
     setScrollDebug({
       paragraph: currentParagraphIndex,
@@ -301,7 +337,10 @@ export default function App() {
       executed: shouldScroll,
     });
 
-    // 같은 문단에서 이미 자동 스크롤했다면 중단
+    /**
+     * 같은 문단에서 이미 자동 스크롤한 경우
+     * 매 글자 입력마다 반복 스크롤하지 않도록 중단
+     */
     if (
       lastAutoScrolledParagraphRef.current ===
       currentParagraphIndex
@@ -309,33 +348,30 @@ export default function App() {
       return;
     }
 
-    if (shouldScroll) {
-      const targetPoint =
-        visibleHeight * 0.2;
+    if (!shouldScroll) return;
 
-      const scrollAmount =
-        relativeTop - targetPoint;
+    const scrollAmount =
+      relativeTop - targetPoint;
 
-      const maxScrollTop =
-        scrollContainer.scrollHeight -
-        scrollContainer.clientHeight;
+    const maxScrollTop =
+      scrollContainer.scrollHeight -
+      scrollContainer.clientHeight;
 
-      const nextScrollTop = Math.min(
-        Math.max(
-          0,
-          scrollContainer.scrollTop + scrollAmount
-        ),
-        Math.max(0, maxScrollTop)
-      );
+    const nextScrollTop = Math.min(
+      Math.max(
+        0,
+        scrollContainer.scrollTop + scrollAmount
+      ),
+      Math.max(0, maxScrollTop)
+    );
 
-      scrollContainer.scrollTo({
-        top: nextScrollTop,
-        behavior: "smooth",
-      });
+    scrollContainer.scrollTo({
+      top: nextScrollTop,
+      behavior: "smooth",
+    });
 
-      lastAutoScrolledParagraphRef.current =
-        currentParagraphIndex;
-    }
+    lastAutoScrolledParagraphRef.current =
+      currentParagraphIndex;
   }, [currentParagraphIndex, editMode]);
 
   /**
