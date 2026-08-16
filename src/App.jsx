@@ -12,6 +12,10 @@ import { saveAs } from "file-saver";
 
 const MAX_ROUNDS = 3;
 
+
+// 개발용 스크롤 디버그 화면
+const SHOW_SCROLL_DEBUG = false;
+
 /**
  * 비교용 정규화 함수
  * 화면에 보이는 원문은 그대로 유지하고,
@@ -1370,6 +1374,7 @@ export default function App() {
         © 2025 Park Hyung-jo. All rights reserved.
       </footer>
 
+    {SHOW_SCROLL_DEBUG && (
       <div className="scrollDebug">
         <strong>SCROLL DEBUG</strong>
 
@@ -1405,6 +1410,7 @@ export default function App() {
           스크롤 조건: {scrollDebug.executed ? "YES" : "NO"}
         </div>
       </div>
+   )} 
 
     </div>
   );
