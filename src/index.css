@@ -528,30 +528,39 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
 }
 
 /* =============== TABLET LANDSCAPE =============== */
-@media (max-width: 980px) and (orientation: landscape) {
+@media (orientation: landscape) and (max-width: 1400px) {
+
   .grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
     flex: 1;
     min-height: 0;
-
-    grid-template-columns: 1fr;
-
-    /* 남은 화면을 원문 35% / 필사 65%로 분배 */
-    grid-template-rows: minmax(0, 35fr) minmax(0, 65fr);
-
     overflow: hidden;
   }
 
-  .grid > .pane {
+  /* 원문 영역 높이 제한 */
+  .grid > .pane:first-child {
+    height: 420px;
+    min-height: 420px;
+    max-height: 420px;
+    overflow: hidden;
+  }
+
+  /* 원문 본문만 내부 스크롤 */
+  .grid > .pane:first-child .scroll {
     min-height: 0;
     overflow: hidden;
   }
 
   .grid > .pane:first-child .articleView {
+    flex: 1;
     min-height: 0;
     overflow-y: auto;
   }
 
-  .grid > .pane:nth-child(2) .typingBox {
-    min-height: 0;
+  /* 필사 영역 */
+  .grid > .pane:nth-child(2) {
+    min-height: 300px;
+    overflow: hidden;
   }
 }
