@@ -250,7 +250,7 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   flex:1; min-height:0; display:grid; gap:12px;
   grid-template-columns: 1fr 1fr;
 }
-@media (max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
+/* @media (max-width: 980px){ .grid{ grid-template-columns: 1fr; } } (임시) */
 
 /* 카드 */
 .pane{
@@ -527,27 +527,34 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   color: #7dd3fc;
 }
 
-/* =============== TABLET LANDSCAPE =============== */
-@media (orientation: landscape) and (max-width: 1400px) {
+/* =============== IPAD / TABLET RESPONSIVE =============== */
+
+/*
+ * 세로모드
+ * 원문 위 / 필사 아래
+ */
+@media (max-width: 980px) and (orientation: portrait) {
 
   .grid {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto;
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
+    flex: none;
+    overflow: visible;
   }
 
-  /* 원문 영역 높이 제한 */
+  /*
+   * 원문 카드는 일정 높이만 보여주고
+   * 나머지는 내부에서 스크롤
+   */
   .grid > .pane:first-child {
-    height: 420px;
-    min-height: 420px;
-    max-height: 420px;
+    height: 430px;
+    min-height: 430px;
+    max-height: 430px;
     overflow: hidden;
   }
 
-  /* 원문 본문만 내부 스크롤 */
   .grid > .pane:first-child .scroll {
+    flex: 1;
     min-height: 0;
     overflow: hidden;
   }
@@ -558,9 +565,45 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
     overflow-y: auto;
   }
 
-  /* 필사 영역 */
+  /*
+   * 필사창은 원문 바로 아래에 배치
+   */
   .grid > .pane:nth-child(2) {
-    min-height: 300px;
+    min-height: 430px;
+  }
+
+  /*
+   * 페이지 전체는 세로 스크롤 허용
+   */
+  .container {
+    height: auto;
+    min-height: 100vh;
+  }
+}
+
+
+/*
+ * 가로모드
+ * 기존 데스크톱처럼 좌우 2열 유지
+ */
+@media (min-width: 981px) and (orientation: landscape) {
+
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+
+    flex: 1;
+    min-height: 0;
     overflow: hidden;
+  }
+
+  .grid > .pane {
+    min-height: 0;
+    height: auto;
+    max-height: none;
+  }
+
+  .container {
+    height: 100vh;
   }
 }
