@@ -89,7 +89,13 @@ body{
   letter-spacing: var(--tracking);
 }
 
-.container{ height:100vh; display:flex; flex-direction:column; gap:12px; padding:12px; }
+.container{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:12px;
+}
 
 /* =============== TOP BARS =============== */
 .status{
@@ -169,10 +175,6 @@ body{
   background: var(--card-bg);
   backdrop-filter: var(--frost);
   box-shadow: var(--shadow);
-}
-
-.resultsBar{
-  margin-top:-4px;
 }
 
 /* =============== FORM CONTROLS (통일 높이) =============== */
