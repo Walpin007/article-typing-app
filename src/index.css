@@ -257,6 +257,27 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   padding:12px 14px; border-bottom:1px solid color-mix(in oklab, var(--card-stroke) 70%, transparent);
   font-weight:700; color:var(--text-strong); display:flex; align-items:center; gap:8px;
 }
+/* 기사 원문 헤더 */
+.articleHeader {
+  flex-direction: column;
+  align-items: flex-start !important;
+  justify-content: center;
+  gap: 4px !important;
+}
+
+.articleHeaderTitle {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text-strong);
+}
+
+.articleHeaderMeta {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
 
 /* 내부 스크롤 컨테이너: flex로 바꿔서 자식이 꽉 차게 */
 .scroll{

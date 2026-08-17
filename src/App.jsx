@@ -1171,37 +1171,25 @@ export default function App() {
       <div className="grid">
         {/* 왼쪽: 기사 원문 */}
         <div className="pane">
-          <header ref={headerLeftRef}>
-            {article.title ||
-              "기사 원문"}{" "}
+          <header ref={headerLeftRef} className="articleHeader">
+            <div className="articleHeaderTitle">
+              {article.title || "기사 원문"}
+            </div>
 
-            <span
-              style={{
-                color:
-                  "var(--text-muted)",
-                fontWeight: 400,
-              }}
-            >
-              · 출처:{" "}
-              {article.source || "-"}
-
+            <div className="articleHeaderMeta">
+              출처: {article.source || "-"}
               {article.pubDate && (
                 <>
                   {" "}
                   · 날짜:{" "}
-                  {new Date(
-                    article.pubDate
-                  ).toLocaleDateString(
-                    "ko-KR",
-                    {
-                      year: "numeric",
-                      month: "2-digit",
-                      day: "2-digit",
-                    }
-                  )}
+                  {new Date(article.pubDate).toLocaleDateString("ko-KR", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                  })}
                 </>
               )}
-            </span>
+            </div>
           </header>
 
           <div className="scroll">
