@@ -535,8 +535,8 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
 
     grid-template-columns: 1fr;
 
-    /* 남은 화면을 원문 42% / 필사 58%로 분배 */
-    grid-template-rows: minmax(0, 42fr) minmax(0, 58fr);
+    /* 남은 화면을 원문 35% / 필사 65%로 분배 */
+    grid-template-rows: minmax(0, 35fr) minmax(0, 65fr);
 
     overflow: hidden;
   }
