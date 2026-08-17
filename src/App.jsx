@@ -1207,11 +1207,11 @@ export default function App() {
           <div className="scroll">
             <div
               ref={leftRef}
-              className="articleView mono"
+              className="articleView"
             >
               {editMode ? (
                 <textarea
-                  className="editorInput mono"
+                  className="editorInput"
                   spellCheck="false"
                   value={draft}
                   onChange={(event) =>
