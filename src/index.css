@@ -100,9 +100,9 @@ body{
 /* =============== TOP BARS =============== */
 .status{
   display:grid;
-  grid-template-columns: 160px minmax(260px, 1fr) 220px;
+  grid-template-columns: 125px minmax(260px, 1fr) 220px;
   align-items:center;
-  gap: 12px;
+  gap: 10px;
   padding:10px 12px;
   border-radius:14px;
   border:1px solid var(--card-stroke);
@@ -175,6 +175,11 @@ body{
   background: var(--card-bg);
   backdrop-filter: var(--frost);
   box-shadow: var(--shadow);
+}
+
+/* 기사 선택 라벨 영역을 상단 '기사 필사' 영역과 같은 폭으로 */
+.resultsBar label {
+  flex: 0 0 160px;
 }
 
 /* =============== FORM CONTROLS (통일 높이) =============== */

@@ -987,12 +987,7 @@ export default function App() {
       {options.length > 0 && (
         <div className="resultsBar">
           <label htmlFor="articleSelect">
-            기사 선택(최대{" "}
-            {Math.min(
-              10,
-              options.length
-            )}
-            개):
+            기사 선택
           </label>
 
           <select
