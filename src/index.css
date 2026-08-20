@@ -579,14 +579,6 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   }
 }
 
-/* 하단 여백 */
-
-@media (orientation: landscape) {
-  .grid {
-    margin-bottom: 12px;
-  }
-}
-
 /* =============== ARTICLE PROGRESS =============== */
 
 .articleInfo {
