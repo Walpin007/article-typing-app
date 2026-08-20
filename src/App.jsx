@@ -1309,10 +1309,8 @@ export default function App() {
             </div>
           </div>
           
-          <div
-            className="articleProgress"
-            aria-label={`원문 노출 진행률 ${Math.round(articleScrollProgress)}%`}
-          >
+        <div className="info articleInfo">
+          <div className="articleProgress">
             <div
               className="articleProgressBar"
               style={{
@@ -1321,11 +1319,11 @@ export default function App() {
             />
           </div>
 
-          <div className="info">
+          <span>
             기사 출처와 날짜를 확인한 뒤 필사를 시작하세요.
-          </div>
+          </span>
         </div>
-
+        
         {/* 오른쪽: 필사 입력 */}
         <div className="pane">
           <header ref={headerRightRef}>
