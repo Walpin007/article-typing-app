@@ -1249,7 +1249,7 @@ export default function App() {
           <div className="scroll">
             <div
               ref={leftRef}
-              className="articleView"
+              className={`articleView ${editMode ? "editing" : ""}`}
               onScroll={handleArticleScroll}
             >
               {editMode ? (
@@ -1305,7 +1305,7 @@ export default function App() {
                 </div>
               )}
 
-              <div className="footer-gap-3" />
+      {!editMode && <div className="footer-gap-3" />}
             </div>
           </div>
           

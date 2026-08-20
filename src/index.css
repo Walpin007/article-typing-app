@@ -301,6 +301,10 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   flex-direction: column;
 }
 
+.articleView.editing {
+  padding-bottom: 14px;
+}
+
 .articleText {
   margin: 0;
 
