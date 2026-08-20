@@ -86,6 +86,7 @@ export default function App() {
     scrollHeight: 0,
     executed: false,
   });
+  const [articleScrollProgress, setArticleScrollProgress] = useState(0);
 
   /**
    * Search state
@@ -909,6 +910,64 @@ export default function App() {
     };
   }, []);
 
+  /**
+   * 원문 노출 진행률
+   *
+   * 현재까지 화면에 노출된 기사 영역을 기준으로 계산합니다.
+   * 따라서 처음 로드했을 때도 화면에 보이는 만큼 진행률이 표시됩니다.
+   */
+  const updateArticleProgress = () => {
+    const el = leftRef.current;
+
+    if (!el) {
+      setArticleScrollProgress(0);
+      return;
+    }
+
+    const footerGap =
+      el.querySelector(".footer-gap-3");
+
+    const footerGapHeight =
+      footerGap?.offsetHeight || 0;
+
+    // 실제 기사 영역 높이
+    const articleHeight =
+      el.scrollHeight - footerGapHeight;
+
+    // 현재 화면에서 어디까지 노출됐는지
+    const visibleBottom =
+      el.scrollTop + el.clientHeight;
+
+    if (articleHeight <= 0) {
+      setArticleScrollProgress(0);
+      return;
+    }
+
+    const progress =
+      (visibleBottom / articleHeight) * 100;
+
+    setArticleScrollProgress(
+      Math.min(100, Math.max(0, progress))
+    );
+  };
+
+  const handleArticleScroll = () => {
+    updateArticleProgress();
+  };
+  
+  useEffect(() => {
+  if (!text) {
+    setArticleScrollProgress(0);
+    return;
+  }
+
+  const frame = requestAnimationFrame(() => {
+    updateArticleProgress();
+  });
+
+  return () => cancelAnimationFrame(frame);
+}, [text, viewMode, editMode]);
+
   return (
     <div className="container">
       {/* 상단 상태/검색 바 */}
@@ -1191,6 +1250,7 @@ export default function App() {
             <div
               ref={leftRef}
               className="articleView"
+              onScroll={handleArticleScroll}
             >
               {editMode ? (
                 <textarea
@@ -1247,6 +1307,18 @@ export default function App() {
 
               <div className="footer-gap-3" />
             </div>
+          </div>
+          
+          <div
+            className="articleProgress"
+            aria-label={`원문 노출 진행률 ${Math.round(articleScrollProgress)}%`}
+          >
+            <div
+              className="articleProgressBar"
+              style={{
+                width: `${articleScrollProgress}%`,
+              }}
+            />
           </div>
 
           <div className="info">
