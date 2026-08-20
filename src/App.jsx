@@ -1354,8 +1354,8 @@ export default function App() {
                 }
                 placeholder={
                   text.length
-                    ? ""
-                    : "선택한 기사 원문을 그대로 타이핑하세요."
+                    ? "이곳을 클릭하고 필사를 시작하세요"
+                    : "기사를 선택하면 필사를 시작할 수 있습니다"
                 }
               />
             </div>

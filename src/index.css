@@ -393,6 +393,12 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
 }
 .typingInput.error{ color:#ef4444; caret-color:#ef4444; } /* 오타 시 전체 빨강 */
 
+/* 안내문구 */
+.typingInput::placeholder {
+  color: var(--text-muted);
+  opacity: 0.45;
+}
+
 /* 보조 UI */
 .placeholderInline{ color:var(--text-muted); font-style: italic; margin-bottom:8px; }
 .footer-gap-3{ height:3.2em; }
