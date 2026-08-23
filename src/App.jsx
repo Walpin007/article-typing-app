@@ -93,6 +93,17 @@ export default function App() {
 
   // 요약창이 등장하기 직전의 원문/필사 영역 높이 저장
   const [lockedGridHeight, setLockedGridHeight] = useState(null);
+  
+  const [monthlyStats, setMonthlyStats] = useState({
+    month: new Date().getMonth() + 1,
+    totalTypedChars: 0,
+    completedArticles: 0,
+    summaryCount: 0,
+  });
+  
+  useEffect(() => {
+    setMonthlyStats(getCurrentMonthStats());
+  }, []);
 
   /**
    * Search state
@@ -786,6 +797,41 @@ export default function App() {
     );
   };
   
+  const getCurrentMonthStats = () => {
+    const STORAGE_KEY = "trainingHistory";
+
+    const saved = JSON.parse(
+      localStorage.getItem(STORAGE_KEY) || "[]"
+    );
+
+    const history = Array.isArray(saved) ? saved : [];
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const monthNumber = now.getMonth() + 1;
+    const month = String(monthNumber).padStart(2, "0");
+    const monthKey = `${year}-${month}`;
+
+    const monthly = history.filter((item) =>
+      item.date?.startsWith(monthKey)
+    );
+
+    return {
+      month: monthNumber,
+
+      totalTypedChars: monthly.reduce(
+        (sum, item) => sum + (item.typedChars || 0),
+        0
+      ),
+
+      completedArticles: monthly.length,
+
+      summaryCount: monthly.filter(
+        (item) => item.summaryWritten
+      ).length,
+    };
+  };
+  
   /**
    * Word 저장
    */
@@ -797,6 +843,8 @@ export default function App() {
     if (!trainingSavedRef.current) {
       saveTrainingStats();
       trainingSavedRef.current = true;
+
+      setMonthlyStats(getCurrentMonthStats());
     }
 
     const doc = new Document({
@@ -1615,9 +1663,16 @@ export default function App() {
         </section>
       )}
 
-      <footer className="footer">
-        © 2025 Park Hyung-jo. All rights reserved.
-      </footer>
+    <div className="monthlyReward">
+      {monthlyStats.month}월 누적 필사{" "}
+      {monthlyStats.totalTypedChars.toLocaleString()}자 · 기사{" "}
+      {monthlyStats.completedArticles.toLocaleString()}개 · 요약{" "}
+      {monthlyStats.summaryCount.toLocaleString()}개
+    </div>
+
+    <footer className="footer">
+      © 2025 Park Hyung-jo. All rights reserved.
+    </footer>
 
     {SHOW_SCROLL_DEBUG && (
       <div className="scrollDebug">
