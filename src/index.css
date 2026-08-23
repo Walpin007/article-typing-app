@@ -672,11 +672,11 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
 }
 
 .summaryWordButton {
-  width: 40px;
+  width: auto;
   height: 36px;
-  padding: 8px;
+  padding: 0 12px;
 
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
 
@@ -684,11 +684,10 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   color: white;
 
   border-radius: 8px;
-}
 
-.summaryWordButton svg {
-  width: 20px;
-  height: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .summaryInput {

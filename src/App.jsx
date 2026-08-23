@@ -1528,37 +1528,8 @@ export default function App() {
               className="summaryWordButton"
               onClick={downloadWordFile}
               title="워드 파일로 저장"
-              aria-label="워드 파일로 저장"
             >
-              <svg
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  d="M4 3.5h10l6 6V20.5H4z"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinejoin="round"
-                />
-
-                <path
-                  d="M14 3.5v6h6"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinejoin="round"
-                />
-
-                <path
-                  d="M7.5 12l1.5 5 1.5-3.8L12 17l1.5-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              워드 저장
             </button>
           </div>
 
@@ -1569,7 +1540,7 @@ export default function App() {
               setSummary(event.target.value)
             }
             spellCheck="false"
-            placeholder="기사의 핵심 내용을 직접 요약해 보세요. (워드 저장 버튼으로 Skip 가능)"
+            placeholder="직접 기사의 핵심 내용을 요약해 보세요. (워드 저장 버튼으로 Skip 가능)"
           />
         </section>
       )}
