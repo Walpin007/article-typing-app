@@ -567,7 +567,10 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   height: auto;
   min-height: 100dvh;
   overflow-y: visible;
-  padding-bottom: 12px;
+}
+
+.container.summaryOpen .footer {
+  margin-bottom: calc(12px + env(safe-area-inset-bottom));
 }
 
   /* 원문 높이 제한 */
