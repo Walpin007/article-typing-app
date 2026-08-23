@@ -87,6 +87,12 @@ export default function App() {
     executed: false,
   });
   const [articleScrollProgress, setArticleScrollProgress] = useState(0);
+  
+  const [summary, setSummary] = useState("");
+  const [summaryVisible, setSummaryVisible] = useState(false);
+
+  // 요약창이 등장하기 직전의 원문/필사 영역 높이 저장
+  const [lockedGridHeight, setLockedGridHeight] = useState(null);
 
   /**
    * Search state
@@ -122,11 +128,13 @@ export default function App() {
 
   // 실제 원문 스크롤 컨테이너 (.articleView)
   const leftRef = useRef(null);
-
   const typingRef = useRef(null);
-
+  
   // 마지막으로 자동 스크롤한 문단 번호
   const lastAutoScrolledParagraphRef = useRef(-1);
+  
+  const gridRef = useRef(null);
+  const summaryRef = useRef(null);
 
   /**
    * Current text / input
@@ -529,6 +537,10 @@ export default function App() {
         setTyped(["", "", ""]);
         setPaused(false);
         setCountdown(null);
+        
+        setSummary("");
+        setSummaryVisible(false);
+        setLockedGridHeight(null);
 
         lastAutoScrolledParagraphRef.current = -1;
 
@@ -648,6 +660,10 @@ export default function App() {
       setTyped(["", "", ""]);
       setPaused(false);
       setCountdown(null);
+      
+      setSummary("");
+      setSummaryVisible(false);
+      setLockedGridHeight(null);
 
       lastAutoScrolledParagraphRef.current = -1;
 
@@ -689,6 +705,21 @@ export default function App() {
       await navigator.clipboard.writeText(input);
     } catch (error) {
       console.error("복사 실패:", error);
+    }
+
+    /**
+     * 3회차가 끝나는 순간
+     * 현재 원문/필사창 높이를 기억한 뒤 요약창을 엽니다.
+     */
+    if (round === MAX_ROUNDS) {
+      if (gridRef.current) {
+        const currentHeight =
+          gridRef.current.getBoundingClientRect().height;
+
+        setLockedGridHeight(currentHeight);
+      }
+
+      setSummaryVisible(true);
     }
 
     setPaused(true);
@@ -801,6 +832,33 @@ export default function App() {
                     text: paragraph,
                   })
               ),
+              
+              new Paragraph({
+                text: "",
+              }),
+
+              new Paragraph({
+                text: "[기사 요약]",
+                heading: HeadingLevel.HEADING_2,
+              }),
+
+              ...(summary.trim()
+                ? summary
+                    .split(/\n+/)
+                    .filter((paragraph) =>
+                      paragraph.trim()
+                    )
+                    .map(
+                      (paragraph) =>
+                        new Paragraph({
+                          text: paragraph,
+                        })
+                    )
+                : [
+                    new Paragraph({
+                      text: "(작성하지 않음)",
+                    }),
+                  ]),
           ],
         },
       ],
@@ -909,6 +967,33 @@ export default function App() {
       );
     };
   }, []);
+  
+  useEffect(() => {
+    if (!summaryVisible) return;
+    if (!summaryRef.current) return;
+
+    const timer = setTimeout(() => {
+      const rect =
+        summaryRef.current.getBoundingClientRect();
+
+      /**
+       * 요약창 상단을 화면 높이의 약 62% 지점에 위치시킵니다.
+       * → 화면 아래 약 38% 정도를 요약 영역으로 사용
+       */
+      const targetViewportY =
+        window.innerHeight * 0.62;
+
+      const scrollAmount =
+        rect.top - targetViewportY;
+
+      window.scrollBy({
+        top: scrollAmount,
+        behavior: "smooth",
+      });
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [summaryVisible]);
 
   /**
    * 원문 노출 진행률
@@ -969,7 +1054,11 @@ export default function App() {
 }, [text, viewMode, editMode]);
 
   return (
-    <div className="container">
+    <div
+      className={`container ${
+        summaryVisible ? "summaryOpen" : ""
+      }`}
+    >
       {/* 상단 상태/검색 바 */}
       <div className="status">
         <div className="left appTitle">
@@ -1222,7 +1311,19 @@ export default function App() {
       )}
 
       {/* 본문 영역 */}
-      <div className="grid">
+      <div
+        ref={gridRef}
+        className="grid"
+        style={
+          summaryVisible && lockedGridHeight
+            ? {
+                flex: "0 0 auto",
+                height: `${lockedGridHeight}px`,
+                minHeight: `${lockedGridHeight}px`,
+              }
+            : undefined
+        }
+      >
         {/* 왼쪽: 기사 원문 */}
         <div className="pane">
           <header ref={headerLeftRef} className="articleHeader">
@@ -1402,27 +1503,76 @@ export default function App() {
                 </span>
               )}
 
-            {paused &&
-              round ===
-                MAX_ROUNDS && (
-                <span className="actions">
-                  <span>
-                    3회차 완료!
-                  </span>
-
-                  <button
-                    className="btnApply"
-                    onClick={
-                      downloadWordFile
-                    }
-                  >
-                    워드 저장
-                  </button>
+            {paused && round === MAX_ROUNDS && (
+              <span className="actions">
+                <span>
+                  3회차 완료! 아래에서 기사를 직접 요약해 보세요.
                 </span>
-              )}
+              </span>
+            )}
           </div>
         </div>
       </div>
+      
+      {summaryVisible && (
+        <section
+          ref={summaryRef}
+          className="summaryPanel"
+        >
+          <div className="summaryHeader">
+            <div className="summaryTitle">
+              기사 요약
+            </div>
+
+            <button
+              className="summaryWordButton"
+              onClick={downloadWordFile}
+              title="워드 파일로 저장"
+              aria-label="워드 파일로 저장"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 3.5h10l6 6V20.5H4z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinejoin="round"
+                />
+
+                <path
+                  d="M14 3.5v6h6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinejoin="round"
+                />
+
+                <path
+                  d="M7.5 12l1.5 5 1.5-3.8L12 17l1.5-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <textarea
+            className="summaryInput"
+            value={summary}
+            onChange={(event) =>
+              setSummary(event.target.value)
+            }
+            spellCheck="false"
+            placeholder="기사의 핵심 내용을 직접 요약해 보세요. (워드 저장 버튼으로 Skip 가능)"
+          />
+        </section>
+      )}
 
       <footer className="footer">
         © 2025 Park Hyung-jo. All rights reserved.

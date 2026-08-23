@@ -563,6 +563,12 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
     min-height: 100vh;
   }
 
+.container.summaryOpen {
+  height: auto;
+  min-height: 100dvh;
+  overflow-y: visible;
+}
+
   /* 원문 높이 제한 */
   .grid > .pane:first-child {
     height: 430px;
@@ -617,4 +623,101 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   border-radius: 0 999px 999px 0;
 
   transition: width 0.15s ease-out;
+}
+
+/* =============== ARTICLE SUMMARY =============== */
+
+.summaryPanel {
+  width: 100%;
+  height: 220px;
+  min-height: 220px;
+
+  flex: none;
+
+  display: flex;
+  flex-direction: column;
+
+  border-radius: 16px;
+  border: 1px solid var(--card-stroke);
+
+  background: var(--card-bg);
+  backdrop-filter: var(--frost);
+  box-shadow: var(--shadow);
+
+  overflow: hidden;
+}
+
+.summaryHeader {
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  min-height: 52px;
+  padding: 8px 12px 8px 14px;
+
+  border-bottom: 1px solid
+    color-mix(
+      in oklab,
+      var(--card-stroke) 70%,
+      transparent
+    );
+}
+
+.summaryTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.summaryWordButton {
+  width: 40px;
+  height: 36px;
+  padding: 8px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--accent);
+  color: white;
+
+  border-radius: 8px;
+}
+
+.summaryWordButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+.summaryInput {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+
+  resize: none;
+  outline: none;
+  border: none;
+
+  padding: 14px;
+
+  background: transparent;
+  color: var(--text);
+
+  font-family: var(--reading-font);
+  font-size: var(--reading-size);
+  font-weight: 400;
+  line-height: var(--reading-line-height);
+  letter-spacing: var(--reading-letter-spacing);
+
+  caret-color: var(--text);
+
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.summaryInput::placeholder {
+  color: var(--text-muted);
+  opacity: 0.45;
 }
