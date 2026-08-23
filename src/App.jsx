@@ -1639,7 +1639,7 @@ export default function App() {
         >
           <div className="summaryHeader">
             <div className="summaryTitle">
-              기사 요약
+              내 문장으로 정리하기
             </div>
 
             <button
@@ -1658,7 +1658,7 @@ export default function App() {
               setSummary(event.target.value)
             }
             spellCheck="false"
-            placeholder="직접 기사의 핵심 내용을 요약해 보세요. (워드 저장 버튼으로 Skip 가능)"
+            placeholder="읽은 내용을 정리하고, 하고 싶은 이야기가 있다면 이어서 써보세요. (워드 저장 버튼으로 Skip 가능)"
           />
         </section>
       )}
@@ -1666,7 +1666,7 @@ export default function App() {
     <div className="monthlyReward">
       {monthlyStats.month}월 누적 필사{" "}
       {monthlyStats.totalTypedChars.toLocaleString()}자 · 기사{" "}
-      {monthlyStats.completedArticles.toLocaleString()}개 · 요약{" "}
+      {monthlyStats.completedArticles.toLocaleString()}개 · 내 문장{" "}
       {monthlyStats.summaryCount.toLocaleString()}개
     </div>
 
