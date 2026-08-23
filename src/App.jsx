@@ -136,6 +136,8 @@ export default function App() {
   const gridRef = useRef(null);
   const summaryRef = useRef(null);
 
+  const trainingSavedRef = useRef(false);
+
   /**
    * Current text / input
    */
@@ -541,6 +543,8 @@ export default function App() {
         setSummary("");
         setSummaryVisible(false);
         setLockedGridHeight(null);
+        
+        trainingSavedRef.current = false;
 
         lastAutoScrolledParagraphRef.current = -1;
 
@@ -664,6 +668,8 @@ export default function App() {
       setSummary("");
       setSummaryVisible(false);
       setLockedGridHeight(null);
+      
+      trainingSavedRef.current = false;
 
       lastAutoScrolledParagraphRef.current = -1;
 
@@ -725,10 +731,74 @@ export default function App() {
     setPaused(true);
   };
 
+
+  /**
+   * 리워드 저장
+   */
+  const saveTrainingStats = () => {
+    const STORAGE_KEY = "trainingHistory";
+
+    const saved = JSON.parse(
+      localStorage.getItem(STORAGE_KEY) || "[]"
+    );
+
+    const history = Array.isArray(saved) ? saved : [];
+
+    const now = new Date();
+
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+
+    const date = `${yyyy}-${mm}-${dd}`;
+
+    const typedChars = typed.reduce(
+      (sum, roundText) => sum + roundText.length,
+      0
+    );
+
+    const record = {
+      id: `${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 8)}`,
+
+      date,
+
+      completedAt: now.toISOString(),
+
+      title: article.title || "",
+      source: article.source || "",
+
+      articleChars: text.length,
+      typedChars,
+
+      rounds: MAX_ROUNDS,
+
+      summaryWritten: Boolean(summary.trim()),
+      summaryChars: summary.trim().length,
+    };
+
+    const nextHistory = [...history, record];
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(nextHistory)
+    );
+  };
+  
   /**
    * Word 저장
    */
   const downloadWordFile = async () => {
+    /**
+     * Word 저장 버튼을 실제로 눌렀을 때만
+     * 훈련 완료 기록을 저장합니다.
+     */
+    if (!trainingSavedRef.current) {
+      saveTrainingStats();
+      trainingSavedRef.current = true;
+    }
+
     const doc = new Document({
       sections: [
         {
