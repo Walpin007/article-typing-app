@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import "./index.css";
 
 import {
@@ -1213,22 +1214,39 @@ export default function App() {
         </div>
 
         <div className="right topRight">
-          <div className="themeToggle" title="테마 전환">
+          <div
+            className="themeToggle"
+            title="테마 전환"
+          >
             <span style={{ opacity: 0.85 }}>
-              {theme === "dark" ? "다크" : "라이트"}
+              {theme === "dark"
+                ? "다크"
+                : "라이트"}
             </span>
 
             <div
-              className={`switch ${theme === "dark" ? "on" : ""}`}
+              className={`switch ${
+                theme === "dark"
+                  ? "on"
+                  : ""
+              }`}
               role="switch"
-              aria-checked={theme === "dark"}
+              aria-checked={
+                theme === "dark"
+              }
               onClick={toggleTheme}
             >
               <div className="knob" />
             </div>
           </div>
+
+          <Link
+            to="/login"
+            className="loginButton"
+          >
+            로그인
+          </Link>
         </div>
-      </div>
 
       {/* 기사 선택 영역 */}
       {options.length > 0 && (
