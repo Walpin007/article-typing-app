@@ -773,18 +773,16 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
 /* =============== LOGIN BUTTON =============== */
 
 .loginButton {
-  height: var(--control-h);
-  padding: 0 14px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  border-radius: 8px;
-  border: 1px solid var(--input-stroke);
+  padding: 4px 2px;
 
-  background: var(--input-bg);
-  color: var(--text-strong);
+  background: transparent;
+  border: none;
+
+  color: var(--text-muted-strong);
 
   font-size: 14px;
   font-weight: 600;
@@ -792,18 +790,19 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   text-decoration: none;
   white-space: nowrap;
 
+  cursor: pointer;
+
   transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
+    color 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .loginButton:hover {
-  background:
-    color-mix(
-      in oklab,
-      var(--input-bg) 88%,
-      var(--accent)
-    );
+  color: var(--accent);
+}
+
+.loginButton:active {
+  opacity: 0.65;
 }
 
 /* =============== LOGIN PAGE =============== */
