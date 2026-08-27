@@ -964,3 +964,14 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
 .backToTyping:hover {
   color: var(--text-strong);
 }
+
+.loginError {
+  margin: 16px 0 0;
+
+  font-size: 13px;
+  line-height: 1.5;
+
+  text-align: center;
+
+  color: #ef4444;
+}

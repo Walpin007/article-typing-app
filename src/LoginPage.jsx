@@ -1,7 +1,41 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "./lib/supabaseClient";
 import "./index.css";
 
 export default function LoginPage() {
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleGoogleLogin = async () => {
+    if (loading) return;
+
+    setLoading(true);
+    setErrorMessage("");
+
+    try {
+      const { error } =
+        await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: `${window.location.origin}/`,
+          },
+        });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error("Google 로그인 오류:", error);
+
+      setErrorMessage(
+        "Google 로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요."
+      );
+
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="loginPage">
       <div className="loginCard">
@@ -21,39 +55,19 @@ export default function LoginPage() {
         <button
           className="googleLoginButton"
           type="button"
-          onClick={() => {
-            // 추후 Supabase Google 로그인 연결
-          }}
+          onClick={handleGoogleLogin}
+          disabled={loading}
         >
-          Google로 계속하기
+          {loading
+            ? "Google 로그인 중..."
+            : "Google로 계속하기"}
         </button>
 
-        <div className="loginDivider">
-          <span />
-          <p>또는</p>
-          <span />
-        </div>
-
-        <div className="emailLogin">
-          <label htmlFor="loginEmail">
-            이메일
-          </label>
-
-          <input
-            id="loginEmail"
-            type="email"
-            placeholder="example@email.com"
-          />
-
-          <button
-            type="button"
-            onClick={() => {
-              // 추후 Supabase 이메일 로그인 연결
-            }}
-          >
-            이메일로 계속하기
-          </button>
-        </div>
+        {errorMessage && (
+          <p className="loginError">
+            {errorMessage}
+          </p>
+        )}
 
         <Link
           to="/"
