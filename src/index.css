@@ -265,11 +265,12 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
 
 /* =============== TYPING HEADER =============== */
 
-.typingHeader {
+.pane > header.typingHeader {
+  display: flex;
   flex-direction: column;
-  align-items: flex-start !important;
+  align-items: flex-start;
   justify-content: center;
-  gap: 4px !important;
+  gap: 4px;
 }
 
 .typingHeaderTitle {
@@ -284,6 +285,15 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   font-weight: 400;
   line-height: 1.4;
   color: var(--text-muted);
+}
+
+/* 기사 원문 헤더 - 제목 / 출처를 반드시 2줄 배치 */
+.pane > header.articleHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
 }
 
 .articleHeaderTitle {
