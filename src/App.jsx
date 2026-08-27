@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "./lib/supabaseClient";
 import "./index.css";
 
 import {
@@ -44,7 +45,7 @@ const isValidUrl = (value = "") => {
 
 export default function App() {
   /**
-   * Theme
+   * Theme state
    */
   const getInitTheme = () => {
     const saved = localStorage.getItem("theme");
@@ -69,6 +70,57 @@ export default function App() {
   const toggleTheme = () => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
+
+  /**
+   * 사용자 state
+   */
+   const [user, setUser] = useState(null);
+   const [authLoading, setAuthLoading] = useState(true);
+   
+   useEffect(() => {
+    let mounted = true;
+
+    const loadSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!mounted) return;
+
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    };
+
+    loadSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+        setAuthLoading(false);
+      }
+    );
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  /**
+   * logout state
+   */
+  const handleLogout = async () => {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    console.error("로그아웃 오류:", error);
+    return;
+  }
+
+  setUser(null);
+};
 
   /**
    * Typing state
@@ -1240,12 +1292,34 @@ export default function App() {
             </div>
           </div>
 
-          <Link
-            to="/login"
-            className="loginButton"
-          >
-            로그인
-          </Link>
+          {!authLoading && (
+            <>
+              {user ? (
+                <div className="userArea">
+                  <span className="userName">
+                    {user.user_metadata?.name ||
+                      user.user_metadata?.full_name ||
+                      user.email}
+                  </span>
+
+                  <button
+                    type="button"
+                    className="logoutButton"
+                    onClick={handleLogout}
+                  >
+                    로그아웃
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  className="loginButton"
+                >
+                  로그인
+                </Link>
+              )}
+            </>
+          )}
         </div>
       </div> 
 

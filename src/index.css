@@ -975,3 +975,52 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
 
   color: #ef4444;
 }
+
+/* =============== USER / LOGOUT =============== */
+
+.userArea {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.userName {
+  max-width: 140px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  color: var(--text-muted-strong);
+}
+
+.logoutButton {
+  width: auto;
+  height: auto;
+
+  padding: 4px 2px;
+
+  background: transparent;
+  border: none;
+
+  color: var(--text-muted);
+
+  font-size: 13px;
+  font-weight: 500;
+
+  box-shadow: none;
+}
+
+.logoutButton:hover {
+  background: transparent;
+  color: var(--accent);
+}
+
+.logoutButton:active {
+  transform: none;
+  opacity: 0.65;
+}
