@@ -1024,3 +1024,113 @@ button[disabled]{ opacity:.6; cursor:not-allowed; }
   transform: none;
   opacity: 0.65;
 }
+
+/* =============== USER MENU =============== */
+
+.userMenu {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.userMenuButton {
+  width: auto;
+  height: auto;
+
+  padding: 4px 2px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  background: transparent;
+  border: none;
+  box-shadow: none;
+
+  color: var(--text-muted-strong);
+
+  font-size: 13px;
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+.userMenuButton:hover {
+  background: transparent;
+  color: var(--accent);
+}
+
+.userMenuButton:active {
+  transform: none;
+}
+
+.userName {
+  display: block;
+
+  max-width: 110px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userMenuArrow {
+  flex: 0 0 auto;
+
+  font-size: 10px;
+  opacity: 0.65;
+}
+
+.userDropdown {
+  position: absolute;
+
+  top: calc(100% + 8px);
+  right: 0;
+
+  min-width: 110px;
+
+  padding: 6px;
+
+  border-radius: 10px;
+  border: 1px solid var(--card-stroke);
+
+  background: var(--card-bg);
+  backdrop-filter: var(--frost);
+
+  box-shadow: var(--shadow);
+
+  z-index: 100;
+}
+
+.userDropdownItem {
+  width: 100%;
+  height: 34px;
+
+  padding: 0 10px;
+
+  display: flex;
+  align-items: center;
+
+  background: transparent;
+  border: none;
+
+  color: var(--text);
+
+  font-size: 13px;
+  font-weight: 500;
+
+  border-radius: 7px;
+}
+
+.userDropdownItem:hover {
+  background:
+    color-mix(
+      in oklab,
+      var(--input-bg) 88%,
+      var(--accent)
+    );
+}
+
+.userDropdownItem:active {
+  transform: none;
+}

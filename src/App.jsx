@@ -109,6 +109,12 @@ export default function App() {
   }, []);
 
   /**
+   * 사용자 표기 state
+   */
+   
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  /**
    * logout state
    */
   const handleLogout = async () => {
@@ -1295,20 +1301,40 @@ export default function App() {
           {!authLoading && (
             <>
               {user ? (
-                <div className="userArea">
-                  <span className="userName">
-                    {user.user_metadata?.name ||
-                      user.user_metadata?.full_name ||
-                      user.email}
-                  </span>
-
+                <div className="userMenu">
                   <button
                     type="button"
-                    className="logoutButton"
-                    onClick={handleLogout}
+                    className="userMenuButton"
+                    onClick={() =>
+                      setUserMenuOpen((prev) => !prev)
+                    }
+                    aria-expanded={userMenuOpen}
                   >
-                    로그아웃
+                    <span className="userName">
+                      {user.user_metadata?.name ||
+                        user.user_metadata?.full_name ||
+                        user.email}
+                    </span>
+
+                    <span className="userMenuArrow">
+                      ▾
+                    </span>
                   </button>
+
+                  {userMenuOpen && (
+                    <div className="userDropdown">
+                      <button
+                        type="button"
+                        className="userDropdownItem"
+                        onClick={async () => {
+                          setUserMenuOpen(false);
+                          await handleLogout();
+                        }}
+                      >
+                        로그아웃
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <Link
