@@ -1213,34 +1213,15 @@ export default function App() {
         </div>
 
         <div className="right topRight">
-          <span>
-            정확도: {accuracy}%
-          </span>
-
-          <div
-            className="themeToggle"
-            title="테마 전환"
-          >
-            <span
-              style={{
-                opacity: 0.85,
-              }}
-            >
-              {theme === "dark"
-                ? "다크"
-                : "라이트"}
+          <div className="themeToggle" title="테마 전환">
+            <span style={{ opacity: 0.85 }}>
+              {theme === "dark" ? "다크" : "라이트"}
             </span>
 
             <div
-              className={`switch ${
-                theme === "dark"
-                  ? "on"
-                  : ""
-              }`}
+              className={`switch ${theme === "dark" ? "on" : ""}`}
               role="switch"
-              aria-checked={
-                theme === "dark"
-              }
+              aria-checked={theme === "dark"}
               onClick={toggleTheme}
             >
               <div className="knob" />
@@ -1546,10 +1527,18 @@ export default function App() {
                 
         {/* 오른쪽: 필사 입력 */}
         <div className="pane">
-          <header ref={headerRightRef}>
-            필사 입력
-          </header>
+          <header
+            ref={headerRightRef}
+            className="typingHeader"
+          >
+            <div className="typingHeaderTitle">
+              필사 입력
+            </div>
 
+            <div className="typingHeaderMeta">
+              {Math.min(round, MAX_ROUNDS)}회차 · 정확도 {accuracy}%
+            </div>
+          </header>
           <div className="scroll">
             <div className="typingBox">
               <textarea
