@@ -1247,6 +1247,7 @@ export default function App() {
             로그인
           </Link>
         </div>
+      </div> 
 
       {/* 기사 선택 영역 */}
       {options.length > 0 && (
