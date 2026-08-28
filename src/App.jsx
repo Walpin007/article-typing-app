@@ -15,6 +15,14 @@ import "./index.css";
 /* =============== CONSTANTS =============== */
 
 const MAX_ROUNDS = 3;
+
+const COPYRIGHT_NOTICE = [
+  "본 서비스에서 불러온 기사 원문은 필사 훈련을 위해 일시적으로 제공되며, 서비스의 훈련 기록에는 기사 원문을 저장하지 않습니다.",
+  "기사에 대한 저작권은 해당 언론사 및 저작권자에게 있습니다.",
+  "불러온 기사와 필사 내용은 개인적인 학습 목적으로만 이용해 주세요.",
+  "기사 원문 및 필사 결과의 무단 복제·배포 또는 상업적 이용을 금합니다.",
+];
+
 const SHOW_SCROLL_DEBUG = false;
 
 
@@ -840,6 +848,32 @@ export default function App() {
         {
           children: [
             new Paragraph({
+              text: "[저작권 및 이용 안내]",
+              heading:
+                HeadingLevel.HEADING_1,
+            }),
+
+            ...COPYRIGHT_NOTICE.map(
+              (notice) =>
+                new Paragraph({
+                  text: notice,
+                })
+            ),
+
+            new Paragraph({
+              text: "",
+            }),
+
+            new Paragraph({
+              text:
+                "※ 기사 원문은 저작권 보호를 위해 이 파일에 포함되지 않습니다.",
+            }),
+
+            new Paragraph({
+              text: "",
+            }),
+
+            new Paragraph({
               text:
                 article.title ||
                 "기사 필사",
@@ -859,26 +893,6 @@ export default function App() {
                 ? `날짜: ${article.pubDate}`
                 : "",
             }),
-
-            new Paragraph({
-              text: "",
-            }),
-
-            new Paragraph({
-              text: "[원문]",
-              heading:
-                HeadingLevel.HEADING_2,
-            }),
-
-            ...(text || "")
-              .split("\n\n")
-              .filter(Boolean)
-              .map(
-                (paragraph) =>
-                  new Paragraph({
-                    text: paragraph,
-                  })
-              ),
 
             new Paragraph({
               text: "",
@@ -1783,19 +1797,15 @@ export default function App() {
                   spellCheck="false"
                   value={draft}
                   onChange={(event) =>
-                    setDraft(
-                      event.target.value
-                    )
+                    setDraft(event.target.value)
                   }
                   placeholder="여기서 직접 원문을 고칠 수 있어요."
                 />
-              ) : (
+              ) : text ? (
                 <div className="articleText">
                   {articleSegments.map(
                     (segment, index) => {
-                      if (
-                        segment.isSeparator
-                      ) {
+                      if (segment.isSeparator) {
                         return (
                           <span
                             key={`separator-${index}`}
@@ -1818,6 +1828,26 @@ export default function App() {
                       );
                     }
                   )}
+                </div>
+              ) : (
+                <div className="copyrightNotice">
+                  <div className="copyrightNoticeIcon">
+                    ©
+                  </div>
+
+                  <div className="copyrightNoticeTitle">
+                    저작권 및 이용 안내
+                  </div>
+
+                  <div className="copyrightNoticeText">
+                    {COPYRIGHT_NOTICE.map(
+                      (notice, index) => (
+                        <p key={index}>
+                          {notice}
+                        </p>
+                      )
+                    )}
+                  </div>
                 </div>
               )}
 

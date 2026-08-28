@@ -653,6 +653,68 @@ button[disabled] {
 }
 
 
+/* =============== COPYRIGHT NOTICE =============== */
+
+.copyrightNotice {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  max-width: 620px;
+
+  margin: 0 auto;
+  padding: 36px 28px;
+
+  text-align: center;
+}
+
+.copyrightNoticeIcon {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 14px;
+
+  border: 1px solid var(--card-stroke);
+  border-radius: 50%;
+
+  background: var(--input-bg);
+  color: var(--text-muted);
+
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.copyrightNoticeTitle {
+  margin-bottom: 14px;
+
+  color: var(--text-strong);
+
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.copyrightNoticeText {
+  color: var(--text-muted);
+
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.copyrightNoticeText p {
+  margin: 0 0 6px;
+}
+
+.copyrightNoticeText p:last-child {
+  margin-bottom: 0;
+}
+
 /* =============== TYPING PANE =============== */
 
 .typingBox {
