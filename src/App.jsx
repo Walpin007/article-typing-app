@@ -1334,7 +1334,11 @@ export default function App() {
       {/* 상단 상태 / 검색 */}
       <div className="status">
         <div className="left appTitle">
-          기사 필사
+          <img
+            src="/gpgh-logo.png"
+            alt="GPMH 기사로 훈련하는 글쓰기"
+            className="appLogo"
+          />
         </div>
 
         <div className="center topSearch">
