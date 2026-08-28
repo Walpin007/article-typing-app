@@ -1510,3 +1510,76 @@ button[disabled] {
     min-height: 430px;
   }
 }
+
+/* =============== ARTICLE URL LOADER =============== */
+
+.urlLoader {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.urlInput {
+  flex: 1;
+  min-width: 0;
+  height: var(--control-h);
+
+  padding: 0 14px;
+
+  border: 1px solid var(--card-stroke);
+  border-radius: 10px;
+
+  background: var(--input-bg);
+  color: var(--text-strong);
+
+  font: inherit;
+
+  outline: none;
+
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.urlInput::placeholder {
+  color: var(--text-muted);
+}
+
+.urlInput:focus {
+  border-color: var(--text-muted);
+}
+
+.urlInput:disabled {
+  opacity: 0.6;
+}
+
+.urlLoadButton {
+  flex: 0 0 auto;
+  height: var(--control-h);
+
+  padding: 0 16px;
+
+  border: 1px solid var(--card-stroke);
+  border-radius: 10px;
+
+  background: var(--input-bg);
+  color: var(--text-strong);
+
+  font: inherit;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  white-space: nowrap;
+}
+
+.urlLoadButton:hover:not(:disabled) {
+  background: var(--card-bg);
+}
+
+.urlLoadButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

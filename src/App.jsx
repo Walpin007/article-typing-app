@@ -154,12 +154,7 @@ export default function App() {
   /* ---------- Search ---------- */
 
   const [query, setQuery] = useState("");
-  const [options, setOptions] = useState([]);
-  const [selectedIdx, setSelectedIdx] = useState("");
-  const [hasSearched, setHasSearched] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [loadingArticle, setLoadingArticle] =
-    useState(false);
+  const [loadingArticle, setLoadingArticle] = useState(false);
 
 
   /* ---------- Article ---------- */
@@ -580,137 +575,17 @@ export default function App() {
   /* =============== SEARCH / ARTICLE =============== */
 
   const doSearch = async () => {
-    const keyword = query.trim();
+    const url = query.trim();
 
-    if (!keyword || loading) {
+    if (!url) {
+      alert("필사할 기사의 URL을 입력해 주세요.");
       return;
     }
 
-    setLoading(true);
-    setHasSearched(false);
-    setOptions([]);
-    setSelectedIdx("");
-
-    try {
-      /**
-       * URL을 입력한 경우 검색 결과를 거치지 않고
-       * 바로 기사 본문을 추출합니다.
-       */
-      if (isValidUrl(keyword)) {
-        const response = await fetch(
-          `/api/extract?url=${encodeURIComponent(
-            keyword
-          )}`
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data?.error ||
-            "기사 본문 추출 실패"
-          );
-        }
-
-        const textLength =
-          typeof data?.textLength === "number"
-            ? data.textLength
-            : data?.text?.length || 0;
-
-        const directOption = {
-          idx: 0,
-          sourceType: "direct",
-          title:
-            data?.title ||
-            "직접 입력한 기사",
-          snippet: "",
-          link: keyword,
-          displayLink:
-            data?.source ||
-            new URL(keyword).hostname,
-          pubDate: data?.pubDate || "",
-        };
-
-        setOptions([directOption]);
-        setSelectedIdx("0");
-
-        setArticle({
-          title: directOption.title,
-
-          source: `Direct/${(
-            data?.source ||
-            directOption.displayLink ||
-            ""
-          ).replace(/^www\./, "")}`,
-
-          content: data?.text || "",
-          plain: data?.plain || "",
-          pubDate: data?.pubDate || "",
-          textLength,
-        });
-
-        setViewMode(
-          data?.mode === "plain"
-            ? "plain"
-            : "clean"
-        );
-
-        resetTrainingSession();
-
-        return;
-      }
-
-      const response = await fetch(
-        `/api/search-mixed?q=${encodeURIComponent(
-          keyword
-        )}`
+    if (!isValidUrl(url)) {
+      alert(
+        "올바른 기사 URL을 입력해 주세요.\n\n예: https://example.com/article"
       );
-
-      const data = await response.json();
-
-      const items = Array.isArray(data.items)
-        ? data.items
-        : [];
-
-      const searchOptions = items
-        .slice(0, 10)
-        .map((item, index) => ({
-          idx: index,
-          sourceType: item.sourceType,
-          title: item.title,
-          snippet: item.snippet,
-          link: item.link,
-          displayLink: item.displayLink,
-          pubDate: item.pubDate,
-        }));
-
-      setOptions(searchOptions);
-    } catch (error) {
-      console.error(
-        "검색/기사 추출 오류:",
-        error
-      );
-
-      setOptions([]);
-    } finally {
-      setHasSearched(true);
-      setLoading(false);
-    }
-  };
-
-
-  const loadSelectedArticle = async (idxStr) => {
-    setSelectedIdx(idxStr);
-
-    const idx = Number(idxStr);
-
-    if (Number.isNaN(idx)) {
-      return;
-    }
-
-    const selected = options[idx];
-
-    if (!selected) {
       return;
     }
 
@@ -718,56 +593,71 @@ export default function App() {
 
     try {
       const response = await fetch(
-        `/api/extract?url=${encodeURIComponent(
-          selected.link
-        )}`
+        `/api/extract?url=${encodeURIComponent(url)}`
       );
 
       const data = await response.json();
 
-      const textLength =
-        typeof data?.textLength === "number"
-          ? data.textLength
-          : data?.text?.length || 0;
+      if (!response.ok) {
+        throw new Error(
+          data?.error ||
+            "기사 내용을 불러오지 못했습니다."
+        );
+      }
+
+      const extractedContent =
+        data.content ||
+        data.text ||
+        "";
+
+      const extractedPlain =
+        data.plain ||
+        data.text ||
+        extractedContent;
+
+      if (!extractedContent.trim()) {
+        throw new Error(
+          "기사 본문을 찾지 못했습니다."
+        );
+      }
 
       setArticle({
         title:
-          selected.title ||
-          data?.title ||
-          "",
+          data.title ||
+          "제목 없음",
 
-        source: `${
-          selected.sourceType === "google"
-            ? "Google"
-            : "Naver"
-        }/${(
-          data?.source ||
-          selected.displayLink ||
-          ""
-        ).replace(/^www\./, "")}`,
+        source:
+          data.source ||
+          data.siteName ||
+          new URL(url).hostname,
 
-        content: data?.text || "",
-        plain: data?.plain || "",
+        content:
+          extractedContent,
+
+        plain:
+          extractedPlain,
 
         pubDate:
-          selected.pubDate ||
-          data?.pubDate ||
+          data.pubDate ||
+          data.date ||
           "",
 
-        textLength,
+        textLength:
+          extractedContent.length,
       });
 
-      setViewMode(
-        data?.mode === "plain"
-          ? "plain"
-          : "clean"
-      );
+      setViewMode("clean");
 
       resetTrainingSession();
     } catch (error) {
       console.error(
-        "기사 본문 추출 오류:",
+        "기사 불러오기 오류:",
         error
+      );
+
+      alert(
+        error.message ||
+          "기사 내용을 불러오는 중 오류가 발생했습니다."
       );
     } finally {
       setLoadingArticle(false);
@@ -1448,8 +1338,10 @@ export default function App() {
           기사 필사
         </div>
 
-        <div className="center topSearch">
+        <div className="center topSearch urlLoader">
           <input
+            type="url"
+            className="urlInput"
             value={query}
             onChange={(event) =>
               setQuery(event.target.value)
@@ -1457,23 +1349,25 @@ export default function App() {
             onKeyDown={(event) => {
               if (
                 event.key === "Enter" &&
-                !loading
+                !loadingArticle
               ) {
                 event.preventDefault();
                 doSearch();
               }
             }}
-            disabled={loading}
-            placeholder="키워드 또는 기사 링크를 입력하세요"
+            disabled={loadingArticle}
+            placeholder="필사할 기사 URL을 붙여넣어 주세요"
           />
 
           <button
+            type="button"
+            className="urlLoadButton"
             onClick={doSearch}
-            disabled={loading}
+            disabled={loadingArticle}
           >
-            {loading
-              ? "검색 중…"
-              : "검색"}
+            {loadingArticle
+              ? "불러오는 중…"
+              : "기사 불러오기"}
           </button>
         </div>
 
