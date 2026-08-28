@@ -891,8 +891,12 @@ export default function App() {
     };
   };
   
-  const saveTrainingStatsToSupabase = async () => {
+const saveTrainingStatsToSupabase = async () => {
   if (!user) {
+    alert(
+      "DB 저장 실패: 로그인 사용자 정보를 찾을 수 없습니다."
+    );
+
     return {
       success: false,
       reason: "not_logged_in",
@@ -918,28 +922,36 @@ export default function App() {
     0
   );
 
-  const { error } = await supabase
+  const record = {
+    user_id: user.id,
+
+    completed_date: completedDate,
+    completed_at: now.toISOString(),
+
+    title: article.title || "",
+    source: article.source || "",
+
+    article_chars: text.length,
+    typed_chars: typedChars,
+
+    rounds: MAX_ROUNDS,
+
+    summary_written:
+      Boolean(summary.trim()),
+
+    summary_chars:
+      summary.trim().length,
+  };
+
+  console.log(
+    "Supabase 저장 시도:",
+    record
+  );
+
+  const { data, error } = await supabase
     .from("training_history")
-    .insert({
-      user_id: user.id,
-
-      completed_date: completedDate,
-      completed_at: now.toISOString(),
-
-      title: article.title || "",
-      source: article.source || "",
-
-      article_chars: text.length,
-      typed_chars: typedChars,
-
-      rounds: MAX_ROUNDS,
-
-      summary_written:
-        Boolean(summary.trim()),
-
-      summary_chars:
-        summary.trim().length,
-    });
+    .insert(record)
+    .select();
 
   if (error) {
     console.error(
@@ -947,14 +959,31 @@ export default function App() {
       error
     );
 
+    alert(
+      `DB 저장 실패\n\n` +
+      `message: ${error.message}\n` +
+      `code: ${error.code || "-"}\n` +
+      `details: ${error.details || "-"}\n` +
+      `hint: ${error.hint || "-"}`
+    );
+
     return {
       success: false,
       reason: "database_error",
+      error,
     };
   }
 
+  console.log(
+    "Supabase 저장 성공:",
+    data
+  );
+
+  alert("DB 저장 성공");
+
   return {
     success: true,
+    data,
   };
 };
   
