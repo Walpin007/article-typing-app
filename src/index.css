@@ -1513,44 +1513,177 @@ button[disabled] {
 
 /* =============== TOP ARTICLE CONTROLS =============== */
 
+/*
+ * 기사 필사 제목 영역을 줄여
+ * URL 입력창이 제목 바로 옆에서 시작되도록 조정
+ */
+.status {
+  grid-template-columns:
+    105px
+    minmax(0, 1fr)
+    280px;
+}
+
+
+/* ---------- Center controls ---------- */
+
 .topSearch {
   min-width: 0;
 
-  display: grid;
-  grid-template-columns:
-    minmax(260px, 1fr)
-    auto
-    150px
-    auto;
-
+  display: flex;
   align-items: center;
   gap: 8px;
 }
 
-/* URL 입력창 */
-.topSearch > input {
+
+/* ---------- URL search ---------- */
+
+.urlSearchBox {
+  position: relative;
+
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+
+/*
+ * 기존 입력창의 폰트/배경/테두리 스타일은 유지하면서
+ * 돋보기 들어갈 공간만 왼쪽에 확보
+ */
+.topSearch .urlSearchBox > input {
   width: 100%;
   min-width: 0;
   height: var(--control-h);
+
   box-sizing: border-box;
+
+  padding-left: 38px;
 }
 
-/* 기사 불러오기 / 편집모드 / 적용 / 취소 */
-.topSearch > button {
-  width: auto;
-  min-width: max-content;
-  height: var(--control-h);
 
-  flex: none;
+/* 돋보기 버튼 */
+.urlSearchIcon {
+  position: absolute;
+  z-index: 2;
+
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0 !important;
+  border-radius: 5px !important;
+
+  background: transparent !important;
+  box-shadow: none !important;
+
+  color: var(--text-muted);
+
+  cursor: pointer;
+}
+
+.urlSearchIcon svg {
+  width: 16px;
+  height: 16px;
+
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.urlSearchIcon:hover:not(:disabled) {
+  color: var(--text-strong);
+  background: transparent !important;
+}
+
+.urlSearchIcon:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+
+/* ---------- Article tools ---------- */
+
+.articleTopTools {
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
   white-space: nowrap;
 }
 
-/* 정리본 / 원문텍스트 선택 */
-.topSearch > .viewModeSelect {
-  width: 150px;
-  min-width: 150px;
-  height: var(--control-h);
 
-  flex: none;
+/* 정리본 / 원문텍스트 */
+.articleModeSelect {
+  width: auto;
+  min-width: 112px;
+  height: 32px;
+
+  padding: 0 28px 0 10px;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  border-radius: 8px;
+
   box-sizing: border-box;
+}
+
+
+/* 편집모드 / 적용 / 취소 */
+.articleToolButton {
+  width: auto !important;
+  min-width: 0 !important;
+  height: 32px !important;
+
+  padding: 0 11px !important;
+
+  flex: 0 0 auto;
+
+  font-size: 13px !important;
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  border-radius: 8px !important;
+}
+
+
+/* 편집 시 적용 + 취소 묶음 */
+.articleEditActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  flex: 0 0 auto;
+}
+
+
+/* 적용 */
+.articleTopTools .btnApply {
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+  color: #ffffff !important;
+}
+
+
+/* 취소 */
+.articleTopTools .btnCancel {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: #ffffff !important;
 }

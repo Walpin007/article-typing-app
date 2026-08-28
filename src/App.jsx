@@ -1338,38 +1338,52 @@ export default function App() {
         </div>
 
         <div className="center topSearch">
-          <input
-            value={query}
-            onChange={(event) =>
-              setQuery(event.target.value)
-            }
-            onKeyDown={(event) => {
-              if (
-                event.key === "Enter" &&
-                !loadingArticle
-              ) {
-                event.preventDefault();
-                doSearch();
-              }
-            }}
-            disabled={loadingArticle}
-            placeholder="필사할 기사 URL을 붙여넣어 주세요"
-          />
+          <div className="urlSearchBox">
+            <button
+              type="button"
+              className="urlSearchIcon"
+              onClick={doSearch}
+              disabled={loadingArticle}
+              aria-label="기사 불러오기"
+              title="기사 불러오기"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle
+                  cx="10.5"
+                  cy="10.5"
+                  r="5.75"
+                />
+                <path d="M15 15L20 20" />
+              </svg>
+            </button>
 
-          <button
-            type="button"
-            onClick={doSearch}
-            disabled={loadingArticle}
-          >
-            {loadingArticle
-              ? "불러오는 중…"
-              : "기사 불러오기"}
-          </button>
+            <input
+              type="url"
+              value={query}
+              onChange={(event) =>
+                setQuery(event.target.value)
+              }
+              onKeyDown={(event) => {
+                if (
+                  event.key === "Enter" &&
+                  !loadingArticle
+                ) {
+                  event.preventDefault();
+                  doSearch();
+                }
+              }}
+              disabled={loadingArticle}
+              placeholder="필사할 기사 URL을 붙여넣어 주세요"
+            />
+          </div>
 
           {(article.content || article.plain) && (
-            <>
+            <div className="articleTopTools">
               <select
-                className="viewModeSelect"
+                className="articleModeSelect"
                 value={viewMode}
                 onChange={(event) => {
                   setViewMode(
@@ -1385,13 +1399,14 @@ export default function App() {
                 </option>
 
                 <option value="plain">
-                  원문텍스트(라이트)
+                  원문텍스트
                 </option>
               </select>
 
               {!editMode ? (
                 <button
                   type="button"
+                  className="articleToolButton"
                   onClick={() => {
                     const base =
                       (
@@ -1407,10 +1422,10 @@ export default function App() {
                   편집 모드
                 </button>
               ) : (
-                <>
+                <div className="articleEditActions">
                   <button
                     type="button"
-                    className="btnApply"
+                    className="articleToolButton btnApply"
                     onClick={() => {
                       if (viewMode === "clean") {
                         setArticle(
@@ -1440,7 +1455,7 @@ export default function App() {
 
                   <button
                     type="button"
-                    className="btnCancel"
+                    className="articleToolButton btnCancel"
                     onClick={() => {
                       setEditMode(false);
                       setDraft("");
@@ -1448,9 +1463,9 @@ export default function App() {
                   >
                     취소
                   </button>
-                </>
+                </div>
               )}
-            </>
+            </div>
           )}
         </div>
 
