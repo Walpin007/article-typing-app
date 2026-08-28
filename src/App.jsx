@@ -979,8 +979,6 @@ const saveTrainingStatsToSupabase = async () => {
     data
   );
 
-  alert("DB 저장 성공");
-
   return {
     success: true,
     data,
@@ -995,29 +993,41 @@ const downloadWordFile = async () => {
    * Word 저장 버튼을 실제로 눌렀을 때만
    * 훈련 완료 기록을 저장합니다.
    */
-  if (!trainingSavedRef.current) {
+if (!trainingSavedRef.current) {
+  // 기존 localStorage 기록은 당분간 유지
+  saveTrainingStats();
 
-    // 기존 localStorage 기록은 당분간 유지
-    saveTrainingStats();
+  let serverSaved = true;
 
-    // 로그인 상태라면 Supabase에도 저장
-    if (user) {
-      const result =
-        await saveTrainingStatsToSupabase();
+  // 로그인 상태라면 Supabase에도 저장
+  if (user) {
+    const result =
+      await saveTrainingStatsToSupabase();
 
-      if (!result.success) {
-        console.error(
-          "서버 기록 저장에 실패했습니다."
-        );
-      }
+    serverSaved = result.success;
+
+    if (!result.success) {
+      console.error(
+        "서버 기록 저장에 실패했습니다."
+      );
     }
-
-    trainingSavedRef.current = true;
-
-    setMonthlyStats(
-      getCurrentMonthStats()
-    );
   }
+
+  /**
+   * 로그인 상태에서는 서버 저장 성공 시에만
+   * 저장 완료로 처리합니다.
+   *
+   * 실패하면 다시 워드 저장을 눌러
+   * 서버 저장을 재시도할 수 있습니다.
+   */
+  if (!user || serverSaved) {
+    trainingSavedRef.current = true;
+  }
+
+  setMonthlyStats(
+    getCurrentMonthStats()
+  );
+}
 
   const doc = new Document({
       sections: [
