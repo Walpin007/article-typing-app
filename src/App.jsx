@@ -160,9 +160,17 @@ export default function App() {
     summaryCount: 0,
   });
   
-  useEffect(() => {
-    setMonthlyStats(getCurrentMonthStats());
-  }, []);
+useEffect(() => {
+  if (authLoading) return;
+
+  if (user) {
+    loadMonthlyStatsFromSupabase();
+  } else {
+    setMonthlyStats(
+      getCurrentMonthStats()
+    );
+  }
+}, [user, authLoading]);
 
   /**
    * Search state
@@ -891,6 +899,96 @@ export default function App() {
     };
   };
   
+  const loadMonthlyStatsFromSupabase = async () => {
+  if (!user) return;
+
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const monthNumber =
+    now.getMonth() + 1;
+
+  const month = String(
+    monthNumber
+  ).padStart(2, "0");
+
+  /**
+   * 이번 달 첫날
+   */
+  const startDate =
+    `${year}-${month}-01`;
+
+  /**
+   * 다음 달 첫날
+   */
+  const nextMonthDate =
+    new Date(
+      year,
+      now.getMonth() + 1,
+      1
+    );
+
+  const nextYear =
+    nextMonthDate.getFullYear();
+
+  const nextMonth = String(
+    nextMonthDate.getMonth() + 1
+  ).padStart(2, "0");
+
+  const endDate =
+    `${nextYear}-${nextMonth}-01`;
+
+  const { data, error } =
+    await supabase
+      .from("training_history")
+      .select(
+        "typed_chars, summary_written"
+      )
+      .gte(
+        "completed_date",
+        startDate
+      )
+      .lt(
+        "completed_date",
+        endDate
+      );
+
+  if (error) {
+    console.error(
+      "월간 필사 기록 조회 오류:",
+      error
+    );
+
+    return;
+  }
+
+  const history =
+    Array.isArray(data)
+      ? data
+      : [];
+
+  setMonthlyStats({
+    month: monthNumber,
+
+    totalTypedChars:
+      history.reduce(
+        (sum, item) =>
+          sum +
+          (item.typed_chars || 0),
+        0
+      ),
+
+    completedArticles:
+      history.length,
+
+    summaryCount:
+      history.filter(
+        (item) =>
+          item.summary_written
+      ).length,
+  });
+};
+  
 const saveTrainingStatsToSupabase = async () => {
   if (!user) {
     alert(
@@ -1024,6 +1122,9 @@ if (!trainingSavedRef.current) {
     trainingSavedRef.current = true;
   }
 
+if (user && serverSaved) {
+  await loadMonthlyStatsFromSupabase();
+} else if (!user) {
   setMonthlyStats(
     getCurrentMonthStats()
   );
