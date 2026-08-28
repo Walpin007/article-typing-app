@@ -1130,7 +1130,10 @@ if (user && serverSaved) {
   );
 }
 
-  const doc = new Document({
+// 훈련 기록 저장 처리 끝
+}
+
+const doc = new Document({
       sections: [
         {
           children: [
