@@ -1337,10 +1337,8 @@ export default function App() {
           기사 필사
         </div>
 
-        <div className="center topSearch urlLoader">
+        <div className="center topSearch">
           <input
-            type="url"
-            className="urlInput"
             value={query}
             onChange={(event) =>
               setQuery(event.target.value)
@@ -1360,7 +1358,6 @@ export default function App() {
 
           <button
             type="button"
-            className="urlLoadButton"
             onClick={doSearch}
             disabled={loadingArticle}
           >
@@ -1368,6 +1365,93 @@ export default function App() {
               ? "불러오는 중…"
               : "기사 불러오기"}
           </button>
+
+          {(article.content || article.plain) && (
+            <>
+              <select
+                className="viewModeSelect"
+                value={viewMode}
+                onChange={(event) => {
+                  setViewMode(
+                    event.target.value
+                  );
+
+                  setEditMode(false);
+                  setDraft("");
+                }}
+              >
+                <option value="clean">
+                  정리본(클린)
+                </option>
+
+                <option value="plain">
+                  원문텍스트(라이트)
+                </option>
+              </select>
+
+              {!editMode ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const base =
+                      (
+                        viewMode === "clean"
+                          ? article.content
+                          : article.plain
+                      ) || "";
+
+                    setDraft(base);
+                    setEditMode(true);
+                  }}
+                >
+                  편집 모드
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="btnApply"
+                    onClick={() => {
+                      if (viewMode === "clean") {
+                        setArticle(
+                          (prev) => ({
+                            ...prev,
+                            content: draft,
+                            textLength:
+                              draft.length,
+                          })
+                        );
+                      } else {
+                        setArticle(
+                          (prev) => ({
+                            ...prev,
+                            plain: draft,
+                            textLength:
+                              draft.length,
+                          })
+                        );
+                      }
+
+                      setEditMode(false);
+                    }}
+                  >
+                    적용
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btnCancel"
+                    onClick={() => {
+                      setEditMode(false);
+                      setDraft("");
+                    }}
+                  >
+                    취소
+                  </button>
+                </>
+              )}
+            </>
+          )}
         </div>
 
         <div className="right topRight">
@@ -1460,93 +1544,6 @@ export default function App() {
           )}
         </div>
       </div>
-
-      {/* 기사 도구 */}
-      {(article.content || article.plain) && (
-        <div className="resultsBar">
-          <select
-            className="viewModeSelect"
-            value={viewMode}
-            onChange={(event) => {
-              setViewMode(
-                event.target.value
-              );
-
-              setEditMode(false);
-              setDraft("");
-            }}
-          >
-            <option value="clean">
-              정리본(클린)
-            </option>
-
-            <option value="plain">
-              원문텍스트(라이트)
-            </option>
-          </select>
-
-          {!editMode ? (
-            <button
-              onClick={() => {
-                const base =
-                  (
-                    viewMode === "clean"
-                      ? article.content
-                      : article.plain
-                  ) || "";
-
-                setDraft(base);
-                setEditMode(true);
-              }}
-            >
-              편집 모드
-            </button>
-          ) : (
-            <>
-              <button
-                className="btnApply"
-                onClick={() => {
-                  if (
-                    viewMode === "clean"
-                  ) {
-                    setArticle(
-                      (prev) => ({
-                        ...prev,
-                        content: draft,
-                        textLength:
-                          draft.length,
-                      })
-                    );
-                  } else {
-                    setArticle(
-                      (prev) => ({
-                        ...prev,
-                        plain: draft,
-                        textLength:
-                          draft.length,
-                      })
-                    );
-                  }
-
-                  setEditMode(false);
-                }}
-              >
-                적용
-              </button>
-
-              <button
-                className="btnCancel"
-                onClick={() => {
-                  setEditMode(false);
-                  setDraft("");
-                }}
-              >
-                취소
-              </button>
-            </>
-          )}
-        </div>
-      )}
 
       {/* 검색 / 기사 로딩 */}
       {loadingArticle && (
