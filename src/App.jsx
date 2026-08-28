@@ -988,6 +988,227 @@ useEffect(() => {
       ).length,
   });
 };
+
+const migrateLocalHistoryToSupabase = async () => {
+  if (!user) {
+    alert("로그인 후 기존 기록을 가져올 수 있습니다.");
+    return;
+  }
+
+  const STORAGE_KEY = "trainingHistory";
+
+  const saved = JSON.parse(
+    localStorage.getItem(STORAGE_KEY) || "[]"
+  );
+
+  const localHistory =
+    Array.isArray(saved)
+      ? saved
+      : [];
+
+  if (localHistory.length === 0) {
+    alert("이 기기에 이전할 기존 기록이 없습니다.");
+    return;
+  }
+
+  /**
+   * 이미 서버에 존재하는 기록 조회
+   *
+   * 방금 테스트하면서 localStorage와 Supabase에
+   * 동시에 저장된 기록이 있을 수 있으므로
+   * 중복 여부를 확인합니다.
+   */
+  const {
+    data: serverHistory,
+    error: readError,
+  } = await supabase
+    .from("training_history")
+    .select(
+      `
+        completed_date,
+        completed_at,
+        title,
+        typed_chars,
+        summary_chars,
+        migration_key
+      `
+    );
+
+  if (readError) {
+    console.error(
+      "기존 서버 기록 조회 실패:",
+      readError
+    );
+
+    alert(
+      `기존 기록 조회 실패\n\n${readError.message}`
+    );
+
+    return;
+  }
+
+  const existing =
+    Array.isArray(serverHistory)
+      ? serverHistory
+      : [];
+
+  /**
+   * 이미 DB에 있는 기록인지 검사
+   */
+  const isAlreadyInDatabase = (item) => {
+    /**
+     * migration_key가 같은 경우
+     */
+    if (
+      item.id &&
+      existing.some(
+        (serverItem) =>
+          serverItem.migration_key ===
+          item.id
+      )
+    ) {
+      return true;
+    }
+
+    /**
+     * 기존 테스트 기록은 migration_key가 없으므로
+     * 제목 + 글자수 + 작성시각을 함께 비교
+     */
+    return existing.some(
+      (serverItem) => {
+        const sameTitle =
+          (serverItem.title || "") ===
+          (item.title || "");
+
+        const sameTypedChars =
+          (serverItem.typed_chars || 0) ===
+          (item.typedChars || 0);
+
+        const sameSummaryChars =
+          (serverItem.summary_chars || 0) ===
+          (item.summaryChars || 0);
+
+        const localTime =
+          new Date(
+            item.completedAt || 0
+          ).getTime();
+
+        const serverTime =
+          new Date(
+            serverItem.completed_at || 0
+          ).getTime();
+
+        const closeInTime =
+          localTime > 0 &&
+          serverTime > 0 &&
+          Math.abs(
+            localTime - serverTime
+          ) < 60 * 1000;
+
+        return (
+          sameTitle &&
+          sameTypedChars &&
+          sameSummaryChars &&
+          closeInTime
+        );
+      }
+    );
+  };
+
+  const recordsToInsert =
+    localHistory
+      .filter(
+        (item) =>
+          !isAlreadyInDatabase(item)
+      )
+      .map((item) => ({
+        user_id: user.id,
+
+        completed_date:
+          item.date ||
+          new Date()
+            .toISOString()
+            .slice(0, 10),
+
+        completed_at:
+          item.completedAt ||
+          new Date().toISOString(),
+
+        title:
+          item.title || "",
+
+        source:
+          item.source || "",
+
+        article_chars:
+          item.articleChars || 0,
+
+        typed_chars:
+          item.typedChars || 0,
+
+        rounds:
+          item.rounds || MAX_ROUNDS,
+
+        summary_written:
+          Boolean(
+            item.summaryWritten
+          ),
+
+        summary_chars:
+          item.summaryChars || 0,
+
+        migration_key:
+          item.id || null,
+      }));
+
+  /**
+   * 전부 이미 이전된 경우
+   */
+  if (recordsToInsert.length === 0) {
+    alert(
+      "기존 기록이 이미 모두 서버에 저장되어 있습니다."
+    );
+
+    await loadMonthlyStatsFromSupabase();
+
+    return;
+  }
+
+  const { error: insertError } =
+    await supabase
+      .from("training_history")
+      .insert(recordsToInsert);
+
+  if (insertError) {
+    console.error(
+      "기존 기록 이전 실패:",
+      insertError
+    );
+
+    alert(
+      `기존 기록 이전 실패\n\n` +
+      `${insertError.message}`
+    );
+
+    return;
+  }
+
+  /**
+   * 해당 사용자에 대해
+   * 이 기기에서 마이그레이션 완료 표시
+   */
+  localStorage.setItem(
+    `trainingHistoryMigrated:${user.id}`,
+    "true"
+  );
+
+  await loadMonthlyStatsFromSupabase();
+
+  alert(
+    `기존 기록 이전 완료\n\n` +
+    `${recordsToInsert.length}개의 기록을 서버에 추가했습니다.`
+  );
+};
   
 const saveTrainingStatsToSupabase = async () => {
   if (!user) {
@@ -1550,6 +1771,17 @@ const doc = new Document({
 
                   {userMenuOpen && (
                     <div className="userDropdown">
+                      <button
+                        type="button"
+                        className="userDropdownItem"
+                        onClick={async () => {
+                          setUserMenuOpen(false);
+                          await migrateLocalHistoryToSupabase();
+                        }}
+                      >
+                        기존 기록 가져오기
+                      </button>
+
                       <button
                         type="button"
                         className="userDropdownItem"
