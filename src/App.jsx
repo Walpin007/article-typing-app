@@ -1246,7 +1246,6 @@ export default function App() {
     article.pubDate,
     viewMode,
     editMode,
-    selectedIdx,
   ]);
 
 
@@ -1462,56 +1461,9 @@ export default function App() {
         </div>
       </div>
 
-
-      {/* 기사 선택 */}
-      {options.length > 0 && (
+      {/* 기사 도구 */}
+      {(article.content || article.plain) && (
         <div className="resultsBar">
-          <label htmlFor="articleSelect">
-            기사 선택
-          </label>
-
-          <select
-            id="articleSelect"
-            className="articleSelect"
-            value={selectedIdx}
-            onChange={(event) =>
-              loadSelectedArticle(
-                event.target.value
-              )
-            }
-          >
-            <option
-              value=""
-              disabled
-            >
-              -- 선택하세요 --
-            </option>
-
-            {options.map((option) => (
-              <option
-                key={option.idx}
-                value={option.idx}
-              >
-                [
-                {option.sourceType ===
-                "google"
-                  ? "Google"
-                  : option.sourceType ===
-                      "naver"
-                    ? "Naver"
-                    : "Direct"}
-                ]{" "}
-                {option.title}
-
-                {article.title ===
-                  option.title &&
-                article.textLength
-                  ? ` · ${article.textLength.toLocaleString()}자`
-                  : ""}
-              </option>
-            ))}
-          </select>
-
           <select
             className="viewModeSelect"
             value={viewMode}
@@ -1523,10 +1475,6 @@ export default function App() {
               setEditMode(false);
               setDraft("");
             }}
-            disabled={
-              !article.content &&
-              !article.plain
-            }
           >
             <option value="clean">
               정리본(클린)
@@ -1550,10 +1498,6 @@ export default function App() {
                 setDraft(base);
                 setEditMode(true);
               }}
-              disabled={
-                !article.content &&
-                !article.plain
-              }
             >
               편집 모드
             </button>
@@ -1604,35 +1548,7 @@ export default function App() {
         </div>
       )}
 
-
       {/* 검색 / 기사 로딩 */}
-      {loading && (
-        <div className="loadingRow">
-          <span className="spinner" />
-          구글·네이버에서 기사 가져오는 중…
-        </div>
-      )}
-
-      {hasSearched &&
-        !loading &&
-        options.length === 0 && (
-          <div
-            className="loadingRow"
-            style={{
-              paddingTop: 0,
-            }}
-          >
-            <span
-              style={{
-                opacity: 0.85,
-              }}
-            >
-              뉴스 결과가 없습니다. 검색어를 바꾸거나 더
-              구체적으로 입력해 보세요.
-            </span>
-          </div>
-        )}
-
       {loadingArticle && (
         <div className="loadingRow">
           <span className="spinner" />
