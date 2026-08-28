@@ -1510,3 +1510,47 @@ button[disabled] {
     min-height: 430px;
   }
 }
+
+/* =============== TOP ARTICLE CONTROLS =============== */
+
+.topSearch {
+  min-width: 0;
+
+  display: grid;
+  grid-template-columns:
+    minmax(260px, 1fr)
+    auto
+    150px
+    auto;
+
+  align-items: center;
+  gap: 8px;
+}
+
+/* URL 입력창 */
+.topSearch > input {
+  width: 100%;
+  min-width: 0;
+  height: var(--control-h);
+  box-sizing: border-box;
+}
+
+/* 기사 불러오기 / 편집모드 / 적용 / 취소 */
+.topSearch > button {
+  width: auto;
+  min-width: max-content;
+  height: var(--control-h);
+
+  flex: none;
+  white-space: nowrap;
+}
+
+/* 정리본 / 원문텍스트 선택 */
+.topSearch > .viewModeSelect {
+  width: 150px;
+  min-width: 150px;
+  height: var(--control-h);
+
+  flex: none;
+  box-sizing: border-box;
+}
