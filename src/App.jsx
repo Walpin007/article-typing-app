@@ -166,9 +166,12 @@ useEffect(() => {
   if (user) {
     loadMonthlyStatsFromSupabase();
   } else {
-    setMonthlyStats(
-      getCurrentMonthStats()
-    );
+    setMonthlyStats({
+      month: new Date().getMonth() + 1,
+      totalTypedChars: 0,
+      completedArticles: 0,
+      summaryCount: 0,
+    });
   }
 }, [user, authLoading]);
 
