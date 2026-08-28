@@ -5,6 +5,7 @@ import {
   Packer,
   Paragraph,
   HeadingLevel,
+  TextRun,
 } from "docx";
 import { saveAs } from "file-saver";
 
@@ -849,29 +850,46 @@ export default function App() {
         {
           children: [
             new Paragraph({
-              text: "[저작권 및 이용 안내]",
-              heading:
-                HeadingLevel.HEADING_1,
-            }),
-
-            ...COPYRIGHT_NOTICE.map(
-              (notice) =>
-                new Paragraph({
-                  text: notice,
-                })
-            ),
-
-            new Paragraph({
-              text: "",
+              children: [
+                new TextRun({
+                  text: "[저작권 및 이용 안내]",
+                  bold: true,
+                  color: "C62828",
+                  size: 22,
+                }),
+              ],
+              spacing: {
+                after: 120,
+              },
             }),
 
             new Paragraph({
-              text:
-                "※ 기사 원문은 저작권 보호를 위해 이 파일에 포함되지 않습니다.",
+              children: [
+                new TextRun({
+                  text: COPYRIGHT_NOTICE.join(" "),
+                  color: "C62828",
+                  size: 18,
+                }),
+              ],
+              spacing: {
+                after: 100,
+              },
             }),
 
             new Paragraph({
-              text: "",
+              children: [
+                new TextRun({
+                  text:
+                    "※ 기사 원문은 저작권 보호를 위해 이 파일에 포함되지 않습니다.",
+                  bold: true,
+                  color: "C62828",
+                  size: 18,
+                }),
+              ],
+              spacing: {
+                before: 100,
+                after: 300,
+              },
             }),
 
             new Paragraph({
