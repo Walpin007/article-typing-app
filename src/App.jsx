@@ -1403,6 +1403,7 @@ export default function App() {
                 </option>
               </select>
 
+            <div className="articleEditSlot">
               {!editMode ? (
                 <button
                   type="button"
@@ -1432,8 +1433,7 @@ export default function App() {
                           (prev) => ({
                             ...prev,
                             content: draft,
-                            textLength:
-                              draft.length,
+                            textLength: draft.length,
                           })
                         );
                       } else {
@@ -1441,8 +1441,7 @@ export default function App() {
                           (prev) => ({
                             ...prev,
                             plain: draft,
-                            textLength:
-                              draft.length,
+                            textLength: draft.length,
                           })
                         );
                       }

@@ -1553,11 +1553,15 @@ button[disabled] {
 .topSearch .urlSearchBox > input {
   width: 100%;
   min-width: 0;
-  height: var(--control-h);
+  height: 32px;
 
   box-sizing: border-box;
 
-  padding-left: 38px;
+  padding-left: 36px;
+  padding-right: 10px;
+
+  font-size: 13px;
+  font-weight: 500;
 }
 
 
@@ -1566,13 +1570,13 @@ button[disabled] {
   position: absolute;
   z-index: 2;
 
-  left: 10px;
+  left: 9px;
   top: 50%;
   transform: translateY(-50%);
 
-  width: 24px !important;
-  min-width: 24px !important;
-  height: 24px !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  height: 22px !important;
 
   padding: 0 !important;
   margin: 0 !important;
@@ -1664,9 +1668,24 @@ button[disabled] {
 
 
 /* 편집 시 적용 + 취소 묶음 */
-.articleEditActions {
+.articleEditSlot {
+  width: 108px;
+  min-width: 108px;
+  height: 32px;
+
+  flex: 0 0 108px;
+
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+}
+
+.articleEditActions {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   gap: 6px;
 
   flex: 0 0 auto;
