@@ -891,22 +891,106 @@ export default function App() {
     };
   };
   
+  const saveTrainingStatsToSupabase = async () => {
+  if (!user) {
+    return {
+      success: false,
+      reason: "not_logged_in",
+    };
+  }
+
+  const now = new Date();
+
+  const yyyy = now.getFullYear();
+  const mm = String(
+    now.getMonth() + 1
+  ).padStart(2, "0");
+  const dd = String(
+    now.getDate()
+  ).padStart(2, "0");
+
+  const completedDate =
+    `${yyyy}-${mm}-${dd}`;
+
+  const typedChars = typed.reduce(
+    (sum, roundText) =>
+      sum + roundText.length,
+    0
+  );
+
+  const { error } = await supabase
+    .from("training_history")
+    .insert({
+      user_id: user.id,
+
+      completed_date: completedDate,
+      completed_at: now.toISOString(),
+
+      title: article.title || "",
+      source: article.source || "",
+
+      article_chars: text.length,
+      typed_chars: typedChars,
+
+      rounds: MAX_ROUNDS,
+
+      summary_written:
+        Boolean(summary.trim()),
+
+      summary_chars:
+        summary.trim().length,
+    });
+
+  if (error) {
+    console.error(
+      "Supabase 필사 기록 저장 오류:",
+      error
+    );
+
+    return {
+      success: false,
+      reason: "database_error",
+    };
+  }
+
+  return {
+    success: true,
+  };
+};
+  
   /**
    * Word 저장
    */
-  const downloadWordFile = async () => {
-    /**
-     * Word 저장 버튼을 실제로 눌렀을 때만
-     * 훈련 완료 기록을 저장합니다.
-     */
-    if (!trainingSavedRef.current) {
-      saveTrainingStats();
-      trainingSavedRef.current = true;
+const downloadWordFile = async () => {
+  /**
+   * Word 저장 버튼을 실제로 눌렀을 때만
+   * 훈련 완료 기록을 저장합니다.
+   */
+  if (!trainingSavedRef.current) {
 
-      setMonthlyStats(getCurrentMonthStats());
+    // 기존 localStorage 기록은 당분간 유지
+    saveTrainingStats();
+
+    // 로그인 상태라면 Supabase에도 저장
+    if (user) {
+      const result =
+        await saveTrainingStatsToSupabase();
+
+      if (!result.success) {
+        console.error(
+          "서버 기록 저장에 실패했습니다."
+        );
+      }
     }
 
-    const doc = new Document({
+    trainingSavedRef.current = true;
+
+    setMonthlyStats(
+      getCurrentMonthStats()
+    );
+  }
+
+  const doc = new Document({
       sections: [
         {
           children: [
@@ -1015,7 +1099,7 @@ export default function App() {
               }),
 
               new Paragraph({
-                text: "[기사 요약]",
+                text: "[내 문장으로 정리하기]",
                 heading: HeadingLevel.HEADING_2,
               }),
 
