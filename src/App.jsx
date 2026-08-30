@@ -1597,8 +1597,9 @@ export default function App() {
             className="articleHeader"
           >
             <div className="articleHeaderTitle">
-              {article.title ||
-                "기사 원문"}
+              {article.title || "기사 원문"}
+              {article.textLength > 0 &&
+                ` (${article.textLength.toLocaleString()}자)`}
             </div>
 
             <div className="articleHeaderMeta">
