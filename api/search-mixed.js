@@ -48,9 +48,8 @@ function toDate(v) {
 }
 
 /* ───── Google CSE (최신순) ───── */
-function buildGoogleURL(q, key, cx) {
+function buildGoogleURL(q, cx) {
   const u = new URL("https://www.googleapis.com/customsearch/v1");
-  u.searchParams.set("key", key);
   u.searchParams.set("cx", cx);
   u.searchParams.set("q", q);
   u.searchParams.set("num", "10");      // ⬅️ 10개 요청
@@ -90,20 +89,18 @@ function mapGoogleItems(items = []) {
 
 async function searchGoogle(q, key, cx) {
   if (!key || !cx) return { items: [], error: "Missing GOOGLE env vars" };
-  const url = buildGoogleURL(q, key, cx).toString();
+  const url = buildGoogleURL(q, cx).toString();
 
-  const res = await abortableFetch(url, { headers: { Accept: "application/json" } }, 12000);
-  const status = res.status;
-  let data = null;
-  try { data = await res.json(); } catch {}
-
-  if (!res.ok) {
-    return { items: [], error: data || { status, message: "Google request failed" }, debug: { status, url } };
-  }
+  const res = await abortableFetch(url, {
+    headers: { Accept: "application/json", "X-Goog-Api-Key": key },
+    redirect: "error"
+  }, 12000);
+  if (!res.ok) return { items: [], error: "Google request failed" };
+  const data = await res.json();
 
   // ⬅️ 10개까지 수용
   const items = mapGoogleItems(data.items || []).slice(0, 10);
-  return { items, debug: { status, url, count: items.length } };
+  return { items };
 }
 
 /* ───── Naver 뉴스 (최신순) ───── */
@@ -117,6 +114,7 @@ async function searchNaver(q, id, secret) {
   u.searchParams.set("sort", "date");  // 최신순
 
   const res = await abortableFetch(u, {
+    redirect: "error",
     headers: {
       "X-Naver-Client-Id": id,
       "X-Naver-Client-Secret": secret,
@@ -124,9 +122,8 @@ async function searchNaver(q, id, secret) {
     }
   }, 12000);
 
-  const status = res.status;
+  if (!res.ok) return { items: [], error: "Naver request failed" };
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) return { items: [], error: data, debug: { status, url: u.toString() } };
 
   const items = (data.items || []).map(it => {
     const link = it.link || it.originallink || "";
@@ -142,7 +139,7 @@ async function searchNaver(q, id, secret) {
     };
   }).slice(0, 10); // ⬅️ 10개로 유지
 
-  return { items, debug: { status, url: u.toString(), count: items.length } };
+  return { items };
 }
 
 /* ───── 핸들러 ───── */
@@ -151,13 +148,22 @@ export default async function handler(req, res) {
     const { q } = req.query;
     if (!q) return res.status(400).json({ error: "Missing query ?q=" });
 
+    const { GOOGLE_API_KEY, GOOGLE_CSE_CX, NAVER_CLIENT_ID, NAVER_CLIENT_SECRET } = process.env;
     const [g, n] = await Promise.all([
-      searchGoogle(q, process.env.GOOGLE_API_KEY, process.env.GOOGLE_CSE_CX),
-      searchNaver(q, process.env.NAVER_CLIENT_ID, process.env.NAVER_CLIENT_SECRET)
+      searchGoogle(q, GOOGLE_API_KEY, GOOGLE_CSE_CX),
+      searchNaver(q, NAVER_CLIENT_ID, NAVER_CLIENT_SECRET)
     ]);
 
     // 합치기 → 중복 제거 → 날짜 기준 최신순 정렬 → 최대 10개
-    let items = dedupeByLink([...(g.items || []), ...(n.items || [])]);
+    // Discard a result if a provider echoes a credential into an article field.
+    const credentials = [GOOGLE_API_KEY, NAVER_CLIENT_ID, NAVER_CLIENT_SECRET]
+      .filter(Boolean)
+      .flatMap(value => [value, encodeURIComponent(value)]);
+    const publicItems = [...g.items, ...n.items].filter(item =>
+      Object.values(item).every(value => value == null ||
+        (typeof value === "string" && !credentials.some(secret => value.includes(secret))))
+    );
+    let items = dedupeByLink(publicItems);
 
     items = items
       .map(it => {
@@ -171,11 +177,9 @@ export default async function handler(req, res) {
     const meta = {};
     if (g.error) meta.googleError = g.error;
     if (n.error) meta.naverError = n.error;
-    if (g.debug) meta.googleDebug = g.debug;
-    if (n.debug) meta.naverDebug = n.debug;
 
     return res.status(200).json({ items, ...meta });
-  } catch (e) {
-    return res.status(500).json({ error: e.message });
+  } catch {
+    return res.status(500).json({ error: "Search failed" });
   }
 }
