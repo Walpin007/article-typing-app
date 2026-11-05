@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
-import { afterEach, beforeEach, test } from "node:test";
-import handler from "../api/search-mixed.js";
+import { afterEach, beforeEach, mock, test } from "node:test";
+import dotenv from "dotenv";
+
+// Do not read a developer's real .env.local while importing the handler.
+const dotenvConfig = mock.method(dotenv, "config", () => ({ parsed: {} }));
+let handler;
+try {
+  ({ default: handler } = await import("../api/search-mixed.js"));
+} finally {
+  dotenvConfig.mock.restore();
+}
 
 const env = {
   GOOGLE_API_KEY: "google-canary_123456",
@@ -11,7 +20,13 @@ const env = {
 const secrets = [env.GOOGLE_API_KEY, env.NAVER_CLIENT_ID, env.NAVER_CLIENT_SECRET];
 const original = Object.fromEntries(Object.keys(env).map(k => [k, process.env[k]]));
 
-beforeEach(() => Object.assign(process.env, env));
+beforeEach(t => {
+  Object.assign(process.env, env);
+  // A forgotten provider mock must never make a real network request.
+  t.mock.method(globalThis, "fetch", async () => {
+    assert.fail("Unexpected unmocked fetch");
+  });
+});
 afterEach(() => {
   for (const [k, v] of Object.entries(original)) {
     if (v === undefined) delete process.env[k];
@@ -60,12 +75,14 @@ test("mixed success preserves request options, filtering, dedupe, order and limi
     assert.deepEqual(Object.fromEntries(url.searchParams),
       { cx: env.GOOGLE_CSE_CX, q: "기사 검색", num: "10", sort: "date" });
     assert.equal(new Headers(opts.headers).get("x-goog-api-key"), env.GOOGLE_API_KEY);
+    assert.equal(opts.redirect, "error");
     return ok(googleArticle, undated, { ...googleArticle, link: "https://example.org" });
   }, (url, opts) => {
     assert.deepEqual(Object.fromEntries(url.searchParams),
       { query: "기사 검색", display: "10", start: "1", sort: "date" });
     assert.equal(opts.headers["X-Naver-Client-Id"], env.NAVER_CLIENT_ID);
     assert.equal(opts.headers["X-Naver-Client-Secret"], env.NAVER_CLIENT_SECRET);
+    assert.equal(opts.redirect, "error");
     return ok(naverArticle, { ...naverArticle, link: link + "/" }, ...older);
   });
   const [code, body] = await request();
@@ -129,3 +146,51 @@ test("invalid Google JSON cannot expose parser details", async t => {
   providers(t, () => new Response(env.GOOGLE_API_KEY), () => ok());
   assert.deepEqual(await request(), [500, { error: "Search failed" }]);
 });
+
+test("invalid Naver JSON preserves the existing empty-result fallback", async t => {
+  providers(t, () => ok(googleArticle), () => new Response(env.NAVER_CLIENT_SECRET));
+  const [code, body] = await request();
+  assert.equal(code, 200);
+  assert.deepEqual(Object.keys(body), ["items"]);
+  assert.deepEqual(body.items.map(item => item.sourceType), ["google"]);
+});
+
+for (const provider of ["google", "naver"]) {
+  test(provider + " missing configuration preserves the other provider", async t => {
+    if (provider === "google") delete process.env.GOOGLE_API_KEY;
+    else delete process.env.NAVER_CLIENT_SECRET;
+    const fetch = providers(t,
+      provider === "google" ? assert.fail : () => ok(googleArticle),
+      provider === "naver" ? assert.fail : () => ok(naverArticle));
+    const [code, { items, ...meta }] = await request();
+    assert.equal(code, 200);
+    assert.equal(fetch.mock.callCount(), 1);
+    assert.deepEqual(meta, { [provider + "Error"]:
+      provider === "google" ? "Missing GOOGLE env vars" : "Missing NAVER env vars" });
+    assert.deepEqual(items.map(item => item.sourceType),
+      [provider === "google" ? "naver" : "google"]);
+  });
+
+  test(provider + " abort rejection returns a fixed error", async t => {
+    const aborted = () => { throw new DOMException(secrets.join(" "), "AbortError"); };
+    providers(t, provider === "google" ? aborted : () => ok(),
+      provider === "naver" ? aborted : () => ok());
+    assert.deepEqual(await request(), [500, { error: "Search failed" }]);
+  });
+
+  test(provider + " omits raw and encoded credentials from public article fields", async t => {
+    // Batch below each provider's ten-result limit; exercise every credential.
+    for (const secret of secrets) {
+      const unsafe = [secret, encodeURIComponent(secret)].flatMap(value => {
+        const base = provider === "google" ? googleArticle : naverArticle;
+        const summary = provider === "google" ? "snippet" : "description";
+        return [{ ...base, title: value }, { ...base, [summary]: value },
+          { ...base, link: link + "?credential=" + value }];
+      });
+      const fetch = providers(t, provider === "google" ? () => ok(...unsafe) : () => ok(),
+        provider === "naver" ? () => ok(...unsafe) : () => ok());
+      assert.deepEqual(await request(), [200, { items: [] }]);
+      fetch.mock.restore();
+    }
+  });
+}

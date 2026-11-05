@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite --port $PORT --strictPort",
     "build": "vite build",
-    "preview": "vite preview --port $PORT --strictPort"
+    "preview": "vite preview --port $PORT --strictPort",
+    "test": "node --test",
+    "test:watch": "node --test --watch"
   },
   "dependencies": {
     "@mozilla/readability": "^0.5.0",
